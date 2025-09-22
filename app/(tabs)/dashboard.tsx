@@ -125,7 +125,7 @@ export default function DashboardScreen() {
         <View style={styles.statCard}>
           <View style={styles.statCardHeader}>
             <View style={[styles.statIcon, { backgroundColor: Colors.secondaryBackground }]}>
-              <DollarSign size={16} color={Colors.secondary} />
+              <DollarSign size={14} color={Colors.secondary} />
             </View>
             <View style={styles.statTrend}>
               {stats.monthChange > 0 ? (
@@ -148,7 +148,7 @@ export default function DashboardScreen() {
         <View style={styles.statCard}>
           <View style={styles.statCardHeader}>
             <View style={[styles.statIcon, { backgroundColor: Colors.orangeBackground }]}>
-              <Calendar size={16} color={Colors.orange} />
+              <Calendar size={14} color={Colors.orange} />
             </View>
           </View>
           <Text style={styles.statLabel}>This Week</Text>
@@ -159,7 +159,7 @@ export default function DashboardScreen() {
         <View style={styles.statCard}>
           <View style={styles.statCardHeader}>
             <View style={[styles.statIcon, { backgroundColor: Colors.accentBackground }]}>
-              <Target size={16} color={Colors.accent} />
+              <Target size={14} color={Colors.accent} />
             </View>
           </View>
           <Text style={styles.statLabel}>Average</Text>
@@ -197,7 +197,7 @@ export default function DashboardScreen() {
             <View style={[styles.analyticsCard, styles.analyticsCardSmall]}>
               <View style={styles.smallCardHeader}>
                 <View style={[styles.smallCardIcon, { backgroundColor: Colors.successLight }]}>
-                  <ShoppingBag size={14} color={Colors.success} />
+                  <ShoppingBag size={12} color={Colors.success} />
                 </View>
                 <Text style={styles.smallCardTitle}>Top Category</Text>
               </View>
@@ -212,7 +212,7 @@ export default function DashboardScreen() {
             <View style={[styles.analyticsCard, styles.analyticsCardSmall]}>
               <View style={styles.smallCardHeader}>
                 <View style={[styles.smallCardIcon, { backgroundColor: Colors.infoLight }]}>
-                  <Clock size={14} color={Colors.info} />
+                  <Clock size={12} color={Colors.info} />
                 </View>
                 <Text style={styles.smallCardTitle}>Recent Activity</Text>
               </View>
@@ -254,7 +254,7 @@ export default function DashboardScreen() {
             activeOpacity={0.7}
           >
             <View style={[styles.quickActionIcon, { backgroundColor: Colors.primaryBackground }]}>
-              <PieChart size={18} color={Colors.primary} />
+              <PieChart size={16} color={Colors.primary} />
             </View>
             <Text style={styles.quickActionText}>Analytics</Text>
           </TouchableOpacity>
@@ -265,7 +265,7 @@ export default function DashboardScreen() {
             activeOpacity={0.7}
           >
             <View style={[styles.quickActionIcon, { backgroundColor: Colors.secondaryBackground }]}>
-              <Receipt size={18} color={Colors.secondary} />
+              <Receipt size={16} color={Colors.secondary} />
             </View>
             <Text style={styles.quickActionText}>All Receipts</Text>
           </TouchableOpacity>
@@ -276,7 +276,7 @@ export default function DashboardScreen() {
             activeOpacity={0.7}
           >
             <View style={[styles.quickActionIcon, { backgroundColor: Colors.orangeBackground }]}>
-              <Plus size={18} color={Colors.orange} />
+              <Plus size={16} color={Colors.orange} />
             </View>
             <Text style={styles.quickActionText}>Scan New</Text>
           </TouchableOpacity>
@@ -287,7 +287,7 @@ export default function DashboardScreen() {
             activeOpacity={0.7}
           >
             <View style={[styles.quickActionIcon, { backgroundColor: Colors.accentBackground }]}>
-              <CreditCard size={18} color={Colors.accent} />
+              <CreditCard size={16} color={Colors.accent} />
             </View>
             <Text style={styles.quickActionText}>Categories</Text>
           </TouchableOpacity>
@@ -394,25 +394,26 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     backgroundColor: Colors.white,
-    borderRadius: BorderRadius['2xl'],
-    padding: 16,
-    ...Shadows.lg,
+    borderRadius: BorderRadius.xl,
+    padding: 14,
+    ...Shadows.md,
     borderWidth: 1,
     borderColor: Colors.gray100,
+    minHeight: 90,
+    justifyContent: 'space-between',
   },
   statCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   statIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Shadows.sm,
   },
   statTrend: {
     flexDirection: 'row',
@@ -430,14 +431,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   statValue: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '800',
     color: Colors.gray900,
-    marginBottom: 1,
+    marginBottom: 2,
   },
   statSubtext: {
-    fontSize: 11,
-    color: Colors.gray400,
+    fontSize: 12,
+    color: Colors.gray500,
     fontWeight: '500',
   },
   analyticsSection: {
@@ -463,12 +464,14 @@ const styles = StyleSheet.create({
   analyticsCardSmall: {
     flex: 1,
     backgroundColor: Colors.white,
-    padding: 14,
+    padding: 12,
     borderWidth: 1,
     borderColor: Colors.gray100,
+    minHeight: 64,
+    justifyContent: 'space-between',
   },
   analyticsGradient: {
-    padding: 18,
+    padding: 16,
     minHeight: 140,
     justifyContent: 'space-between',
   },
@@ -508,28 +511,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 8,
+    marginBottom: 4,
   },
   smallCardIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
   smallCardTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: Colors.gray600,
   },
   smallCardValue: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '800',
     color: Colors.gray900,
     marginBottom: 1,
   },
   smallCardSubtext: {
-    fontSize: 11,
+    fontSize: 10,
     color: Colors.gray500,
     fontWeight: '500',
   },
@@ -582,20 +585,22 @@ const styles = StyleSheet.create({
   quickActionCard: {
     flex: 1,
     backgroundColor: Colors.white,
-    borderRadius: BorderRadius.xl,
-    padding: 12,
+    borderRadius: BorderRadius.lg,
+    padding: 10,
     alignItems: 'center',
-    ...Shadows.md,
+    ...Shadows.sm,
     borderWidth: 1,
     borderColor: Colors.gray100,
+    minHeight: 60,
+    justifyContent: 'center',
   },
   quickActionIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   quickActionText: {
     fontSize: 12,
