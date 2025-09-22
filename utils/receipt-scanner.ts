@@ -54,8 +54,16 @@ export async function scanReceipt(imageBase64: string): Promise<ReceiptScanResul
       throw new Error('Failed to scan receipt');
     }
 
-    const data = await response.json();
-    console.log('Raw AI response:', data.completion);
+    let data;
+    try {
+      data = await response.json();
+      console.log('Raw AI response:', data.completion);
+    } catch (jsonError) {
+      console.error('Failed to parse AI response as JSON:', jsonError);
+      const responseText = await response.text();
+      console.error('Raw response text:', responseText.substring(0, 200));
+      throw new Error('AI service returned invalid JSON response');
+    }
     
     if (!data.completion) {
       throw new Error('No completion in AI response');

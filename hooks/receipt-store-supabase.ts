@@ -63,12 +63,27 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
       } else {
         console.log('Loading receipts from AsyncStorage');
         const stored = await AsyncStorage.getItem(RECEIPTS_KEY);
-        const receipts = stored ? JSON.parse(stored) : [];
-        console.log('Loaded receipts from AsyncStorage:', receipts.length, 'receipts');
-        if (receipts.length > 0) {
-          console.log('Sample receipt image URIs:', receipts.slice(0, 3).map((r: any) => ({ id: r.id, imageUri: r.imageUri })));
+        if (!stored) {
+          console.log('No stored receipts found in AsyncStorage');
+          return [];
         }
-        return receipts;
+        
+        try {
+          console.log('Raw stored data (first 100 chars):', stored.substring(0, 100));
+          const receipts = JSON.parse(stored);
+          console.log('Loaded receipts from AsyncStorage:', receipts.length, 'receipts');
+          if (receipts.length > 0) {
+            console.log('Sample receipt image URIs:', receipts.slice(0, 3).map((r: any) => ({ id: r.id, imageUri: r.imageUri })));
+          }
+          return receipts;
+        } catch (parseError) {
+          console.error('JSON parse error in receipts:', parseError);
+          console.error('Corrupted data:', stored);
+          // Clear corrupted data and return empty array
+          await AsyncStorage.removeItem(RECEIPTS_KEY);
+          console.log('Cleared corrupted receipts data');
+          return [];
+        }
       }
     },
     enabled: true,
@@ -127,9 +142,19 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
         console.log('Loading categories from AsyncStorage');
         const stored = await AsyncStorage.getItem(CATEGORIES_KEY);
         if (stored) {
-          return JSON.parse(stored);
+          try {
+            console.log('Raw stored categories data (first 100 chars):', stored.substring(0, 100));
+            return JSON.parse(stored);
+          } catch (parseError) {
+            console.error('JSON parse error in categories:', parseError);
+            console.error('Corrupted categories data:', stored);
+            // Clear corrupted data and reinitialize
+            await AsyncStorage.removeItem(CATEGORIES_KEY);
+            console.log('Cleared corrupted categories data');
+          }
         }
         // Initialize with default categories
+        console.log('Initializing with default categories');
         await AsyncStorage.setItem(CATEGORIES_KEY, JSON.stringify(DEFAULT_CATEGORIES));
         return DEFAULT_CATEGORIES;
       }
@@ -240,7 +265,9 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
         try {
           const receipts = receiptsQuery.data || [];
           const updated = [...receipts, receipt];
-          await AsyncStorage.setItem(RECEIPTS_KEY, JSON.stringify(updated));
+          const jsonString = JSON.stringify(updated);
+          console.log('Saving JSON string length:', jsonString.length);
+          await AsyncStorage.setItem(RECEIPTS_KEY, jsonString);
           console.log('Receipt saved successfully to AsyncStorage');
           return updated;
         } catch (storageError: any) {
@@ -288,10 +315,17 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
         return data;
       } else {
         console.log('Updating receipt in AsyncStorage');
-        const receipts = receiptsQuery.data || [];
-        const updated = receipts.map((r: Receipt) => r.id === receipt.id ? receipt : r);
-        await AsyncStorage.setItem(RECEIPTS_KEY, JSON.stringify(updated));
-        return updated;
+        try {
+          const receipts = receiptsQuery.data || [];
+          const updated = receipts.map((r: Receipt) => r.id === receipt.id ? receipt : r);
+          const jsonString = JSON.stringify(updated);
+          console.log('Updating JSON string length:', jsonString.length);
+          await AsyncStorage.setItem(RECEIPTS_KEY, jsonString);
+          return updated;
+        } catch (storageError: any) {
+          console.error('AsyncStorage update error:', storageError);
+          throw new Error(`Storage update error: ${storageError.message || 'Unable to update receipt locally'}`);
+        }
       }
     },
     onSuccess: () => {
@@ -318,10 +352,17 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
         return receiptId;
       } else {
         console.log('Deleting receipt from AsyncStorage');
-        const receipts = receiptsQuery.data || [];
-        const updated = receipts.filter((r: Receipt) => r.id !== receiptId);
-        await AsyncStorage.setItem(RECEIPTS_KEY, JSON.stringify(updated));
-        return updated;
+        try {
+          const receipts = receiptsQuery.data || [];
+          const updated = receipts.filter((r: Receipt) => r.id !== receiptId);
+          const jsonString = JSON.stringify(updated);
+          console.log('Deleting - JSON string length:', jsonString.length);
+          await AsyncStorage.setItem(RECEIPTS_KEY, jsonString);
+          return updated;
+        } catch (storageError: any) {
+          console.error('AsyncStorage delete error:', storageError);
+          throw new Error(`Storage delete error: ${storageError.message || 'Unable to delete receipt locally'}`);
+        }
       }
     },
     onSuccess: () => {
@@ -351,10 +392,17 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
         return data;
       } else {
         console.log('Adding category to AsyncStorage');
-        const categories = categoriesQuery.data || [];
-        const updated = [...categories, category];
-        await AsyncStorage.setItem(CATEGORIES_KEY, JSON.stringify(updated));
-        return updated;
+        try {
+          const categories = categoriesQuery.data || [];
+          const updated = [...categories, category];
+          const jsonString = JSON.stringify(updated);
+          console.log('Adding category - JSON string length:', jsonString.length);
+          await AsyncStorage.setItem(CATEGORIES_KEY, jsonString);
+          return updated;
+        } catch (storageError: any) {
+          console.error('AsyncStorage category add error:', storageError);
+          throw new Error(`Storage category error: ${storageError.message || 'Unable to add category locally'}`);
+        }
       }
     },
     onSuccess: () => {
@@ -459,4 +507,18 @@ export function useCategoryStats() {
     
     return stats.sort((a: any, b: any) => b.total - a.total);
   }, [receipts, categories]);
+}
+
+// Utility function to clear all local storage data (for debugging)
+export async function clearAllLocalData() {
+  try {
+    console.log('Clearing all local storage data...');
+    await AsyncStorage.removeItem(RECEIPTS_KEY);
+    await AsyncStorage.removeItem(CATEGORIES_KEY);
+    console.log('All local storage data cleared successfully');
+    return { success: true };
+  } catch (error) {
+    console.error('Error clearing local storage:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
 }

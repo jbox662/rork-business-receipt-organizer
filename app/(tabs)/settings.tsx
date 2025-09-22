@@ -12,7 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Receipt } from '@/types/receipt';
 import { useAuth } from '@/hooks/auth-store';
-import { useReceipts } from '@/hooks/receipt-store-supabase';
+import { useReceipts, clearAllLocalData } from '@/hooks/receipt-store-supabase';
 import { LogOut, User, Mail, Shield, HelpCircle, Info, ChevronRight, Trash2, Download, RefreshCw } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
 import { Colors } from '@/constants/design-system';
@@ -20,8 +20,9 @@ import { router } from 'expo-router';
 
 export default function SettingsScreen() {
   const { user, signOut, resetPassword } = useAuth();
-  const { receipts, deleteReceipt } = useReceipts();
+  const { receipts, categories, deleteReceipt } = useReceipts();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
   const insets = useSafeAreaInsets();
 
   const handleSignOut = async () => {
@@ -189,6 +190,36 @@ export default function SettingsScreen() {
     );
   };
 
+  const handleClearLocalData = async () => {
+    Alert.alert(
+      'Clear Local Data',
+      'This will clear all locally stored receipts and categories. This may help fix JSON parse errors. This action cannot be undone. Are you sure?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear Data',
+          style: 'destructive',
+          onPress: async () => {
+            setIsClearing(true);
+            try {
+              const result = await clearAllLocalData();
+              if (result.success) {
+                Alert.alert('Success', 'Local data cleared successfully. Please restart the app to see changes.');
+              } else {
+                Alert.alert('Error', `Failed to clear data: ${result.error}`);
+              }
+            } catch (error) {
+              console.error('Error clearing data:', error);
+              Alert.alert('Error', 'Failed to clear local data.');
+            } finally {
+              setIsClearing(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const accountItems = [
     {
       icon: Mail,
@@ -226,6 +257,16 @@ export default function SettingsScreen() {
       title: 'Delete All Data',
       subtitle: 'Permanently remove all receipts',
       onPress: handleDeleteAllData,
+      destructive: true,
+    },
+  ];
+
+  const debugItems = [
+    {
+      icon: RefreshCw,
+      title: 'Clear Local Data',
+      subtitle: 'Fix JSON parse errors and corrupted data',
+      onPress: handleClearLocalData,
       destructive: true,
     },
   ];
@@ -334,6 +375,37 @@ export default function SettingsScreen() {
               <ChevronRight size={16} color="#9CA3AF" />
             </TouchableOpacity>
           ))}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Debug & Troubleshooting</Text>
+          <View style={styles.debugInfo}>
+            <Text style={styles.debugText}>Receipts: {receipts.length}</Text>
+            <Text style={styles.debugText}>Categories: {categories.length}</Text>
+            <Text style={styles.debugText}>Storage: {user ? 'Supabase' : 'Local'}</Text>
+          </View>
+          {debugItems.map((item) => (
+            <TouchableOpacity
+              key={item.title}
+              style={styles.settingItem}
+              onPress={item.onPress}
+              disabled={isClearing}
+            >
+              <View style={styles.settingIcon}>
+                <item.icon size={20} color={item.destructive ? "#DC2626" : "#6B7280"} />
+              </View>
+              <View style={styles.settingContent}>
+                <Text style={[styles.settingTitle, item.destructive && styles.destructiveText]}>
+                  {isClearing ? 'Clearing...' : item.title}
+                </Text>
+                <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
+              </View>
+              <ChevronRight size={16} color="#9CA3AF" />
+            </TouchableOpacity>
+          ))}
+          <Text style={styles.debugNote}>
+            Use this if you&apos;re experiencing &quot;JSON Parse error: Unexpected character&quot; or other data corruption issues.
+          </Text>
         </View>
 
         <View style={styles.section}>
@@ -526,5 +598,27 @@ const styles = StyleSheet.create({
   buttonSection: {
     paddingHorizontal: 20,
     marginBottom: 16,
+  },
+  debugInfo: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: '#F9FAFB',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  debugText: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  debugNote: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    fontStyle: 'italic',
+    backgroundColor: '#FFFBEB',
+    borderTopWidth: 1,
+    borderTopColor: '#FEF3C7',
   },
 });
