@@ -45,14 +45,56 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 5. Click **"RUN"** to execute the script
 6. You should see "Success. No rows returned" message
 
-## ✅ Step 5: Verify Setup
+## 📁 Step 5: Setup Storage for Receipt Images
+
+1. In your Supabase dashboard, go to **Storage**
+2. Click **"Create a new bucket"**
+3. Enter bucket details:
+   - **Name**: `receipt-images`
+   - **Public bucket**: ✅ **Enable** (so images can be viewed in the app)
+   - **File size limit**: `50 MB` (optional)
+   - **Allowed MIME types**: `image/*` (optional, for images only)
+4. Click **"Create bucket"**
+5. Click on the newly created `receipt-images` bucket
+6. Go to **Policies** tab
+7. Click **"Add policy"** and select **"For full customization"**
+8. Add this policy for **INSERT** (allows users to upload images):
+   ```sql
+   CREATE POLICY "Users can upload their own receipt images" ON storage.objects
+   FOR INSERT WITH CHECK (
+     bucket_id = 'receipt-images' AND 
+     auth.uid()::text = (storage.foldername(name))[1]
+   );
+   ```
+9. Add another policy for **SELECT** (allows users to view their images):
+   ```sql
+   CREATE POLICY "Users can view their own receipt images" ON storage.objects
+   FOR SELECT USING (
+     bucket_id = 'receipt-images' AND 
+     auth.uid()::text = (storage.foldername(name))[1]
+   );
+   ```
+10. Add a policy for **DELETE** (allows users to delete their images):
+    ```sql
+    CREATE POLICY "Users can delete their own receipt images" ON storage.objects
+    FOR DELETE USING (
+      bucket_id = 'receipt-images' AND 
+      auth.uid()::text = (storage.foldername(name))[1]
+    );
+    ```
+
+## ✅ Step 6: Verify Setup
 
 1. Go to **Table Editor** in your Supabase dashboard
 2. You should see two tables:
    - `receipts` - stores user receipts
    - `categories` - stores expense categories
+3. Go to **Storage** and verify:
+   - `receipt-images` bucket exists
+   - Bucket is marked as "Public"
+   - Storage policies are active
 
-## 🔐 Step 6: Configure Authentication
+## 🔐 Step 7: Configure Authentication
 
 1. Go to **Authentication** → **Settings** in your Supabase dashboard
 2. Under **Auth Settings**:
@@ -60,7 +102,7 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
    - ✅ Enable "Enable signup" 
 3. Click **Save**
 
-## 🧪 Step 7: Test the App
+## 🧪 Step 8: Test the App
 
 1. Restart your Expo development server:
    ```bash
@@ -112,6 +154,7 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 - Scan receipts with camera or photo library
 - AI-powered receipt data extraction
 - Save receipts to your personal database
+- **Image storage in Supabase** (images sync across devices)
 - View all receipts in the app
 - Edit receipt details
 

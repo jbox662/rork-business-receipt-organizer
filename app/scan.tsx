@@ -7,19 +7,22 @@ import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { Camera, Image as ImageIcon, Check, X, RotateCcw, Zap, ZapOff, ZoomIn, ZoomOut } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useReceipts } from '@/hooks/receipt-store-supabase';
+import { useAuth } from '@/hooks/auth-store';
 import { scanReceipt } from '@/utils/receipt-scanner';
+import { uploadImageToSupabase } from '@/utils/image-upload';
 import { Receipt, ReceiptScanResult } from '@/types/receipt';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Card } from '@/components/ui/Card';
-import { Colors, Typography, Spacing, BorderRadius, Shadows, CommonStyles } from '@/constants/design-system';
+import { Colors } from '@/constants/design-system';
 
 
 
 export default function ScanScreen() {
   const { saveReceipt, categories, isSaving } = useReceipts();
+  const { user } = useAuth();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImageBase64, setSelectedImageBase64] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [scanResult, setScanResult] = useState<ReceiptScanResult | null>(null);
   const [editedResult, setEditedResult] = useState<ReceiptScanResult | null>(null);
   const [showCamera, setShowCamera] = useState(false);
@@ -104,6 +107,7 @@ export default function ScanScreen() {
 
       if (photo) {
         setSelectedImage(photo.uri);
+        setSelectedImageBase64(photo.base64 || null);
         setShowCamera(false);
         if (photo.base64) {
           processImage(photo.base64);
@@ -124,9 +128,15 @@ export default function ScanScreen() {
   };
 
   const processImage = async (base64: string) => {
+    if (!base64 || !base64.trim()) {
+      console.error('Invalid base64 data provided to processImage');
+      return;
+    }
+    
     setIsProcessing(true);
     try {
-      const result = await scanReceipt(base64);
+      const sanitizedBase64 = base64.trim();
+      const result = await scanReceipt(sanitizedBase64);
       setScanResult(result);
       setEditedResult(result);
       
@@ -181,35 +191,66 @@ export default function ScanScreen() {
       return;
     }
 
-    // Generate a temporary ID for local use (Supabase will generate its own UUID)
-    const generateTempId = () => {
-      return 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-    };
-
-    const receipt: Receipt = {
-      id: generateTempId(),
-      imageUri: selectedImage,
-      dateScanned: new Date().toISOString(),
-      receiptDate: editedResult.date,
-      merchant: editedResult.merchant.trim(),
-      total: Number(editedResult.total),
-      tax: Number(editedResult.tax) || 0,
-      subtotal: Number(editedResult.subtotal) || 0,
-      category: editedResult.suggestedCategory.trim(),
-      items: editedResult.items || [],
-      paymentMethod: editedResult.paymentMethod || 'Unknown',
-    };
-    
-    console.log('Final receipt object before save:', {
-      id: receipt.id,
-      merchant: receipt.merchant,
-      total: receipt.total,
-      category: receipt.category,
-      receiptDate: receipt.receiptDate,
-      itemsCount: receipt.items.length
-    });
-
     try {
+      console.log('Starting receipt save process...');
+      
+      let finalImageUri = selectedImage;
+      
+      // Upload image to Supabase if user is authenticated
+      if (user && selectedImage) {
+        console.log('User authenticated, uploading image to Supabase...');
+        setIsUploadingImage(true);
+        
+        const uploadResult = await uploadImageToSupabase(
+          selectedImage,
+          selectedImageBase64 || undefined,
+          user.id,
+          `receipt_${Date.now()}.jpg`
+        );
+        
+        if (uploadResult.success && uploadResult.url) {
+          console.log('Image uploaded successfully:', uploadResult.url);
+          finalImageUri = uploadResult.url;
+        } else {
+          console.error('Image upload failed:', uploadResult.error);
+          // Continue with local image URI as fallback
+          console.log('Continuing with local image URI as fallback');
+        }
+        
+        setIsUploadingImage(false);
+      } else {
+        console.log('User not authenticated or no image, using local storage');
+      }
+
+      // Generate a temporary ID for local use (Supabase will generate its own UUID)
+      const generateTempId = () => {
+        return 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      };
+
+      const receipt: Receipt = {
+        id: generateTempId(),
+        imageUri: finalImageUri,
+        dateScanned: new Date().toISOString(),
+        receiptDate: editedResult.date,
+        merchant: editedResult.merchant.trim(),
+        total: Number(editedResult.total),
+        tax: Number(editedResult.tax) || 0,
+        subtotal: Number(editedResult.subtotal) || 0,
+        category: editedResult.suggestedCategory.trim(),
+        items: editedResult.items || [],
+        paymentMethod: editedResult.paymentMethod || 'Unknown',
+      };
+      
+      console.log('Final receipt object before save:', {
+        id: receipt.id,
+        merchant: receipt.merchant,
+        total: receipt.total,
+        category: receipt.category,
+        receiptDate: receipt.receiptDate,
+        itemsCount: receipt.items.length,
+        imageUri: receipt.imageUri?.substring(0, 50) + '...'
+      });
+
       console.log('Attempting to save receipt...');
       await saveReceipt(receipt);
       console.log('Receipt saved successfully!');
@@ -223,8 +264,7 @@ export default function ScanScreen() {
       console.error('Error saving receipt:', error);
       console.error('Error details:', {
         message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        receipt: receipt
+        stack: error instanceof Error ? error.stack : undefined
       });
       if (Platform.OS !== 'web') {
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -238,6 +278,8 @@ export default function ScanScreen() {
         `Failed to save receipt: ${errorMessage}`,
         [{ text: 'OK' }]
       );
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -346,6 +388,7 @@ export default function ScanScreen() {
     if (!previewImage) return;
     
     setSelectedImage(previewImage);
+    setSelectedImageBase64(previewImageBase64);
     setShowImagePreview(false);
     handleResetZoom();
     
@@ -658,12 +701,12 @@ export default function ScanScreen() {
                 />
                 
                 <Button
-                  title={isSaving ? 'Saving...' : 'Save Receipt'}
+                  title={isSaving || isUploadingImage ? (isUploadingImage ? 'Uploading Image...' : 'Saving...') : 'Save Receipt'}
                   variant="primary"
                   onPress={handleSave}
-                  disabled={isSaving}
-                  loading={isSaving}
-                  icon={!isSaving ? <Check size={20} color={Colors.white} /> : undefined}
+                  disabled={isSaving || isUploadingImage}
+                  loading={isSaving || isUploadingImage}
+                  icon={!isSaving && !isUploadingImage ? <Check size={20} color={Colors.white} /> : undefined}
                   style={styles.flexButton}
                   testID="save-button"
                 />
