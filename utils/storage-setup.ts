@@ -77,7 +77,7 @@ export async function checkStorageSetup(): Promise<StorageSetupResult> {
     
     // Test upload permissions by trying to list files in user's folder
     try {
-      const testPath = `receipts/${user.id}/`;
+      const testPath = `${user.id}/`;
       const { data: files, error: listError } = await supabase.storage
         .from('receipts')
         .list(testPath);
@@ -104,7 +104,7 @@ export async function checkStorageSetup(): Promise<StorageSetupResult> {
       message: 'Storage setup looks good! The receipts bucket exists and is public.',
       details: {
         bucketInfo: receiptBucket,
-        userFolder: `receipts/${user.id}/`,
+        userFolder: `${user.id}/`,
         samplePublicUrl: testUrl.data.publicUrl
       }
     };
@@ -188,7 +188,7 @@ export async function testImageUploadDownload(): Promise<StorageSetupResult> {
     const testImageData = Uint8Array.from(atob(testImageBase64), c => c.charCodeAt(0));
     
     const testFileName = `test_${Date.now()}.png`;
-    const testPath = `receipts/${user.id}/${testFileName}`;
+    const testPath = `${user.id}/${testFileName}`;
     
     console.log('Uploading test image to:', testPath);
     
