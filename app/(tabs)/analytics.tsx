@@ -370,15 +370,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   summaryLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6B7280',
-    marginTop: 8,
-    marginBottom: 4,
+    marginTop: 6,
+    marginBottom: 2,
+    textAlign: 'center',
   },
   summaryValue: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: '700',
     color: '#111827',
+    textAlign: 'center',
   },
   summaryDivider: {
     width: 1,
