@@ -5,7 +5,7 @@ import { Plus, TrendingUp, Receipt, DollarSign, Calendar, BarChart3, PieChart, A
 import { useReceipts, useCategoryStats } from '@/hooks/receipt-store-supabase';
 import { ReceiptCard } from '@/components/ReceiptCard';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, Shadows, BorderRadius, Spacing } from '@/constants/design-system';
+import { Colors, Shadows, BorderRadius } from '@/constants/design-system';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { Receipt as ReceiptType } from '@/types/receipt';
@@ -125,7 +125,7 @@ export default function DashboardScreen() {
         <View style={styles.statCard}>
           <View style={styles.statCardHeader}>
             <View style={[styles.statIcon, { backgroundColor: Colors.secondaryBackground }]}>
-              <DollarSign size={18} color={Colors.secondary} />
+              <DollarSign size={16} color={Colors.secondary} />
             </View>
             <View style={styles.statTrend}>
               {stats.monthChange > 0 ? (
@@ -148,7 +148,7 @@ export default function DashboardScreen() {
         <View style={styles.statCard}>
           <View style={styles.statCardHeader}>
             <View style={[styles.statIcon, { backgroundColor: Colors.orangeBackground }]}>
-              <Calendar size={18} color={Colors.orange} />
+              <Calendar size={16} color={Colors.orange} />
             </View>
           </View>
           <Text style={styles.statLabel}>This Week</Text>
@@ -159,7 +159,7 @@ export default function DashboardScreen() {
         <View style={styles.statCard}>
           <View style={styles.statCardHeader}>
             <View style={[styles.statIcon, { backgroundColor: Colors.accentBackground }]}>
-              <Target size={18} color={Colors.accent} />
+              <Target size={16} color={Colors.accent} />
             </View>
           </View>
           <Text style={styles.statLabel}>Average</Text>
@@ -197,7 +197,7 @@ export default function DashboardScreen() {
             <View style={[styles.analyticsCard, styles.analyticsCardSmall]}>
               <View style={styles.smallCardHeader}>
                 <View style={[styles.smallCardIcon, { backgroundColor: Colors.successLight }]}>
-                  <ShoppingBag size={16} color={Colors.success} />
+                  <ShoppingBag size={14} color={Colors.success} />
                 </View>
                 <Text style={styles.smallCardTitle}>Top Category</Text>
               </View>
@@ -212,7 +212,7 @@ export default function DashboardScreen() {
             <View style={[styles.analyticsCard, styles.analyticsCardSmall]}>
               <View style={styles.smallCardHeader}>
                 <View style={[styles.smallCardIcon, { backgroundColor: Colors.infoLight }]}>
-                  <Clock size={16} color={Colors.info} />
+                  <Clock size={14} color={Colors.info} />
                 </View>
                 <Text style={styles.smallCardTitle}>Recent Activity</Text>
               </View>
@@ -254,7 +254,7 @@ export default function DashboardScreen() {
             activeOpacity={0.7}
           >
             <View style={[styles.quickActionIcon, { backgroundColor: Colors.primaryBackground }]}>
-              <PieChart size={20} color={Colors.primary} />
+              <PieChart size={18} color={Colors.primary} />
             </View>
             <Text style={styles.quickActionText}>Analytics</Text>
           </TouchableOpacity>
@@ -265,7 +265,7 @@ export default function DashboardScreen() {
             activeOpacity={0.7}
           >
             <View style={[styles.quickActionIcon, { backgroundColor: Colors.secondaryBackground }]}>
-              <Receipt size={20} color={Colors.secondary} />
+              <Receipt size={18} color={Colors.secondary} />
             </View>
             <Text style={styles.quickActionText}>All Receipts</Text>
           </TouchableOpacity>
@@ -276,7 +276,7 @@ export default function DashboardScreen() {
             activeOpacity={0.7}
           >
             <View style={[styles.quickActionIcon, { backgroundColor: Colors.orangeBackground }]}>
-              <Plus size={20} color={Colors.orange} />
+              <Plus size={18} color={Colors.orange} />
             </View>
             <Text style={styles.quickActionText}>Scan New</Text>
           </TouchableOpacity>
@@ -287,7 +287,7 @@ export default function DashboardScreen() {
             activeOpacity={0.7}
           >
             <View style={[styles.quickActionIcon, { backgroundColor: Colors.accentBackground }]}>
-              <CreditCard size={20} color={Colors.accent} />
+              <CreditCard size={18} color={Colors.accent} />
             </View>
             <Text style={styles.quickActionText}>Categories</Text>
           </TouchableOpacity>
@@ -395,9 +395,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.white,
     borderRadius: BorderRadius['2xl'],
-    padding: Spacing.lg,
+    padding: 16,
     ...Shadows.lg,
-    minHeight: 120,
     borderWidth: 1,
     borderColor: Colors.gray100,
   },
@@ -405,12 +404,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   statIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     ...Shadows.sm,
@@ -427,14 +426,14 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 12,
     color: Colors.gray500,
-    marginBottom: 4,
+    marginBottom: 2,
     fontWeight: '600',
   },
   statValue: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '800',
     color: Colors.gray900,
-    marginBottom: 2,
+    marginBottom: 1,
   },
   statSubtext: {
     fontSize: 11,
@@ -464,13 +463,13 @@ const styles = StyleSheet.create({
   analyticsCardSmall: {
     flex: 1,
     backgroundColor: Colors.white,
-    padding: 16,
+    padding: 14,
     borderWidth: 1,
     borderColor: Colors.gray100,
   },
   analyticsGradient: {
-    padding: 20,
-    height: '100%',
+    padding: 18,
+    minHeight: 140,
     justifyContent: 'space-between',
   },
   analyticsHeader: {
@@ -508,13 +507,13 @@ const styles = StyleSheet.create({
   smallCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
+    gap: 6,
+    marginBottom: 8,
   },
   smallCardIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -524,10 +523,10 @@ const styles = StyleSheet.create({
     color: Colors.gray600,
   },
   smallCardValue: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '800',
     color: Colors.gray900,
-    marginBottom: 2,
+    marginBottom: 1,
   },
   smallCardSubtext: {
     fontSize: 11,
@@ -584,19 +583,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.white,
     borderRadius: BorderRadius.xl,
-    padding: 16,
+    padding: 12,
     alignItems: 'center',
     ...Shadows.md,
     borderWidth: 1,
     borderColor: Colors.gray100,
   },
   quickActionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   quickActionText: {
     fontSize: 12,
@@ -607,12 +606,12 @@ const styles = StyleSheet.create({
   quickTip: {
     flexDirection: 'row',
     backgroundColor: Colors.primaryBackground,
-    marginHorizontal: Spacing.lg,
-    marginTop: Spacing['2xl'],
-    marginBottom: Spacing['3xl'],
-    padding: Spacing.xl,
+    marginHorizontal: 16,
+    marginTop: 24,
+    marginBottom: 32,
+    padding: 16,
     borderRadius: BorderRadius['2xl'],
-    gap: Spacing.md,
+    gap: 12,
     ...Shadows.md,
     borderWidth: 1,
     borderColor: Colors.primaryLight + '20',
