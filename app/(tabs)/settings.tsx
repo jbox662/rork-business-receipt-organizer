@@ -13,16 +13,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Receipt } from '@/types/receipt';
 import { useAuth } from '@/hooks/auth-store';
 import { useReceipts, clearAllLocalData } from '@/hooks/receipt-store-supabase';
-import { LogOut, User, Mail, Shield, HelpCircle, Info, ChevronRight, Trash2, Download, RefreshCw } from 'lucide-react-native';
+import { LogOut, User, Mail, Shield, HelpCircle, Info, ChevronRight, Trash2, Download, RefreshCw, Database, CheckCircle } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
 import { Colors } from '@/constants/design-system';
 import { router } from 'expo-router';
+import { checkStorageSetup, testImageUploadDownload } from '@/utils/storage-setup';
 
 export default function SettingsScreen() {
   const { user, signOut, resetPassword } = useAuth();
   const { receipts, categories, deleteReceipt } = useReceipts();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  const [isCheckingStorage, setIsCheckingStorage] = useState(false);
+  const [isTestingStorage, setIsTestingStorage] = useState(false);
   const insets = useSafeAreaInsets();
 
   const handleSignOut = async () => {
@@ -220,6 +223,91 @@ export default function SettingsScreen() {
     );
   };
 
+  const handleCheckStorageSetup = async () => {
+    if (!user) {
+      Alert.alert('Sign In Required', 'Please sign in to check storage setup.');
+      return;
+    }
+
+    setIsCheckingStorage(true);
+    try {
+      const result = await checkStorageSetup();
+      
+      if (result.success) {
+        Alert.alert(
+          '✅ Storage Setup OK',
+          result.message,
+          [{ text: 'OK' }]
+        );
+      } else {
+        const instructions = result.details?.instructions;
+        const instructionText = instructions ? '\n\nSetup Instructions:\n' + instructions.join('\n') : '';
+        
+        Alert.alert(
+          '❌ Storage Issue Found',
+          result.message + instructionText,
+          [
+            { text: 'OK' },
+            {
+              text: 'View Setup Guide',
+              onPress: () => {
+                Alert.alert(
+                  'Storage Setup Guide',
+                  'To fix image syncing issues:\n\n1. Go to your Supabase dashboard\n2. Navigate to Storage section\n3. Create a bucket named "receipt-images"\n4. Enable "Public bucket" option\n5. Set up storage policies\n\nFor detailed instructions, check the SUPABASE_SETUP.md file in your project.'
+                );
+              }
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Storage check error:', error);
+      Alert.alert('Error', 'Failed to check storage setup. Please try again.');
+    } finally {
+      setIsCheckingStorage(false);
+    }
+  };
+
+  const handleTestImageUpload = async () => {
+    if (!user) {
+      Alert.alert('Sign In Required', 'Please sign in to test image upload.');
+      return;
+    }
+
+    setIsTestingStorage(true);
+    try {
+      const result = await testImageUploadDownload();
+      
+      if (result.success) {
+        Alert.alert(
+          '✅ Image Upload Test Passed',
+          result.message,
+          [{ text: 'Great!' }]
+        );
+      } else {
+        const causes = result.details?.possibleCauses;
+        const causesText = causes ? '\n\nPossible causes:\n• ' + causes.join('\n• ') : '';
+        
+        Alert.alert(
+          '❌ Image Upload Test Failed',
+          result.message + causesText,
+          [
+            { text: 'OK' },
+            {
+              text: 'Check Setup',
+              onPress: handleCheckStorageSetup
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Image upload test error:', error);
+      Alert.alert('Error', 'Failed to test image upload. Please try again.');
+    } finally {
+      setIsTestingStorage(false);
+    }
+  };
+
   const accountItems = [
     {
       icon: Mail,
@@ -263,11 +351,29 @@ export default function SettingsScreen() {
 
   const debugItems = [
     {
+      icon: Database,
+      title: 'Check Storage Setup',
+      subtitle: 'Verify image storage configuration',
+      onPress: handleCheckStorageSetup,
+      disabled: !user || isCheckingStorage,
+      loading: isCheckingStorage,
+    },
+    {
+      icon: CheckCircle,
+      title: 'Test Image Upload',
+      subtitle: 'Test if images can be uploaded and accessed',
+      onPress: handleTestImageUpload,
+      disabled: !user || isTestingStorage,
+      loading: isTestingStorage,
+    },
+    {
       icon: RefreshCw,
       title: 'Clear Local Data',
       subtitle: 'Fix JSON parse errors and corrupted data',
       onPress: handleClearLocalData,
       destructive: true,
+      disabled: isClearing,
+      loading: isClearing,
     },
   ];
 
@@ -387,24 +493,40 @@ export default function SettingsScreen() {
           {debugItems.map((item) => (
             <TouchableOpacity
               key={item.title}
-              style={styles.settingItem}
-              onPress={item.onPress}
-              disabled={isClearing}
+              style={[styles.settingItem, item.disabled && styles.disabledItem]}
+              onPress={item.disabled ? undefined : item.onPress}
+              disabled={item.disabled}
             >
               <View style={styles.settingIcon}>
-                <item.icon size={20} color={item.destructive ? "#DC2626" : "#6B7280"} />
+                {item.loading ? (
+                  <RefreshCw size={20} color="#6B7280" />
+                ) : (
+                  <item.icon size={20} color={item.destructive ? "#DC2626" : item.disabled ? "#D1D5DB" : "#6B7280"} />
+                )}
               </View>
               <View style={styles.settingContent}>
-                <Text style={[styles.settingTitle, item.destructive && styles.destructiveText]}>
-                  {isClearing ? 'Clearing...' : item.title}
+                <Text style={[
+                  styles.settingTitle, 
+                  item.destructive && styles.destructiveText,
+                  item.disabled && styles.disabledText
+                ]}>
+                  {item.loading ? (
+                    item.title === 'Check Storage Setup' ? 'Checking...' :
+                    item.title === 'Test Image Upload' ? 'Testing...' :
+                    item.title === 'Clear Local Data' ? 'Clearing...' :
+                    item.title
+                  ) : item.title}
                 </Text>
-                <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
+                <Text style={[styles.settingSubtitle, item.disabled && styles.disabledText]}>
+                  {item.subtitle}
+                </Text>
               </View>
-              <ChevronRight size={16} color="#9CA3AF" />
+              <ChevronRight size={16} color={item.disabled ? "#D1D5DB" : "#9CA3AF"} />
             </TouchableOpacity>
           ))}
           <Text style={styles.debugNote}>
-            Use this if you&apos;re experiencing &quot;JSON Parse error: Unexpected character&quot; or other data corruption issues.
+            🔧 If images aren&apos;t syncing across devices, use &quot;Check Storage Setup&quot; first.{"\n"}
+            📱 Use &quot;Clear Local Data&quot; if you&apos;re experiencing &quot;JSON Parse error: Unexpected character&quot; or other data corruption issues.
           </Text>
         </View>
 
