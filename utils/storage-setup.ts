@@ -37,19 +37,19 @@ export async function checkStorageSetup(): Promise<StorageSetupResult> {
     
     console.log('Available buckets:', buckets?.map(b => ({ name: b.name, public: b.public })) || []);
     
-    // Check if receipts bucket exists
-    const receiptBucket = buckets?.find(b => b.name === 'receipts');
+    // Check if receipt-images bucket exists
+    const receiptBucket = buckets?.find(b => b.name === 'receipt-images');
     if (!receiptBucket) {
       return {
         success: false,
-        message: 'Storage bucket "receipts" not found. Please create it in your Supabase dashboard.',
+        message: 'Storage bucket "receipt-images" not found. Please create it in your Supabase dashboard.',
         details: {
           availableBuckets: buckets?.map(b => b.name) || [],
           instructions: [
             '1. Go to your Supabase dashboard',
             '2. Navigate to Storage section',
             '3. Click "Create a new bucket"',
-            '4. Name it "receipts"',
+            '4. Name it "receipt-images"',
             '5. Enable "Public bucket" option',
             '6. Set up the storage policies as described in SUPABASE_SETUP.md'
           ]
@@ -57,17 +57,17 @@ export async function checkStorageSetup(): Promise<StorageSetupResult> {
       };
     }
     
-    console.log('✅ receipts bucket found, public:', receiptBucket.public);
+    console.log('✅ receipt-images bucket found, public:', receiptBucket.public);
     
     if (!receiptBucket.public) {
       return {
         success: false,
-        message: 'Storage bucket "receipts" exists but is not public. Images won\'t be accessible.',
+        message: 'Storage bucket "receipt-images" exists but is not public. Images won\'t be accessible.',
         details: {
           bucketInfo: receiptBucket,
           instructions: [
             '1. Go to your Supabase dashboard',
-            '2. Navigate to Storage > receipts',
+            '2. Navigate to Storage > receipt-images',
             '3. Go to Settings tab',
             '4. Enable "Public bucket" option'
           ]
@@ -79,7 +79,7 @@ export async function checkStorageSetup(): Promise<StorageSetupResult> {
     try {
       const testPath = `${user.id}/`;
       const { data: files, error: listError } = await supabase.storage
-        .from('receipts')
+        .from('receipt-images')
         .list(testPath);
         
       if (listError) {
@@ -94,14 +94,14 @@ export async function checkStorageSetup(): Promise<StorageSetupResult> {
     
     // Test if we can generate a public URL (this doesn't require upload permissions)
     const testUrl = supabase.storage
-      .from('receipts')
+      .from('receipt-images')
       .getPublicUrl('test-path');
       
     console.log('✅ Can generate public URLs:', !!testUrl.data.publicUrl);
     
     return {
       success: true,
-      message: 'Storage setup looks good! The receipts bucket exists and is public.',
+      message: 'Storage setup looks good! The receipt-images bucket exists and is public.',
       details: {
         bucketInfo: receiptBucket,
         userFolder: `${user.id}/`,
@@ -120,14 +120,14 @@ export async function checkStorageSetup(): Promise<StorageSetupResult> {
 }
 
 /**
- * Attempt to create the receipts bucket (requires service role key)
+ * Attempt to create the receipt-images bucket (requires service role key)
  * This function is mainly for documentation - users need to create the bucket manually
  */
 export async function createReceiptImagesBucket(): Promise<StorageSetupResult> {
   try {
-    console.log('Attempting to create receipts bucket...');
+    console.log('Attempting to create receipt-images bucket...');
     
-    const { data, error } = await supabase.storage.createBucket('receipts', {
+    const { data, error } = await supabase.storage.createBucket('receipt-images', {
       public: true,
       fileSizeLimit: 50 * 1024 * 1024, // 50MB
       allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp']
@@ -143,7 +143,7 @@ export async function createReceiptImagesBucket(): Promise<StorageSetupResult> {
             'You need to create the bucket manually in your Supabase dashboard:',
             '1. Go to Storage section',
             '2. Click "Create a new bucket"',
-            '3. Name: "receipts"',
+            '3. Name: "receipt-images"',
             '4. Enable "Public bucket"',
             '5. Set file size limit to 50MB',
             '6. Set allowed MIME types to image/*'
@@ -154,7 +154,7 @@ export async function createReceiptImagesBucket(): Promise<StorageSetupResult> {
     
     return {
       success: true,
-      message: 'Successfully created receipts bucket!',
+      message: 'Successfully created receipt-images bucket!',
       details: { bucketData: data }
     };
     
@@ -170,9 +170,93 @@ export async function createReceiptImagesBucket(): Promise<StorageSetupResult> {
 /**
  * Test image upload and download to verify everything works
  */
+/**
+ * Debug storage configuration and URL construction
+ */
+export async function debugStorageConfiguration(): Promise<StorageSetupResult> {
+  try {
+    console.log('=== DEBUGGING STORAGE CONFIGURATION ===');
+    
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return {
+        success: false,
+        message: 'User not authenticated for debug test.',
+        details: { authError }
+      };
+    }
+    
+    console.log('User ID:', user.id);
+    
+    // Test URL generation
+    const testPath = `${user.id}/debug_test.png`;
+    const { data: urlData } = supabase.storage
+      .from('receipt-images')
+      .getPublicUrl(testPath);
+      
+    console.log('Generated public URL:', urlData.publicUrl);
+    
+    // Parse the URL to understand its structure
+    const url = new URL(urlData.publicUrl);
+    console.log('URL breakdown:');
+    console.log('- Protocol:', url.protocol);
+    console.log('- Host:', url.host);
+    console.log('- Pathname:', url.pathname);
+    console.log('- Search:', url.search);
+    
+    // Check if the URL structure looks correct
+    const expectedPattern = /\/storage\/v1\/object\/public\/receipt-images\//;
+    const isCorrectStructure = expectedPattern.test(url.pathname);
+    console.log('URL structure is correct:', isCorrectStructure);
+    
+    if (!isCorrectStructure) {
+      return {
+        success: false,
+        message: 'Storage URL structure is incorrect. This suggests a bucket configuration issue.',
+        details: {
+          generatedUrl: urlData.publicUrl,
+          expectedPattern: expectedPattern.toString(),
+          actualPathname: url.pathname,
+          instructions: [
+            'Check if the "receipt-images" bucket exists in your Supabase dashboard',
+            'Ensure the bucket is set to "Public"',
+            'Verify your Supabase URL and keys are correct'
+          ]
+        }
+      };
+    }
+    
+    return {
+      success: true,
+      message: 'Storage configuration debugging completed. URL structure looks correct.',
+      details: {
+        userId: user.id,
+        testPath,
+        generatedUrl: urlData.publicUrl,
+        urlStructure: 'correct'
+      }
+    };
+    
+  } catch (error) {
+    return {
+      success: false,
+      message: 'Storage configuration debugging failed.',
+      details: { error: error instanceof Error ? error.message : 'Unknown error' }
+    };
+  }
+}
+
 export async function testImageUploadDownload(): Promise<StorageSetupResult> {
   try {
     console.log('=== TESTING IMAGE UPLOAD/DOWNLOAD ===');
+    
+    // First run debug to understand URL structure
+    const debugResult = await debugStorageConfiguration();
+    console.log('Debug result:', debugResult);
+    
+    if (!debugResult.success) {
+      return debugResult;
+    }
     
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -191,14 +275,23 @@ export async function testImageUploadDownload(): Promise<StorageSetupResult> {
     const testPath = `${user.id}/${testFileName}`;
     
     console.log('Uploading test image to:', testPath);
+    console.log('Full upload URL will be: /storage/v1/object/receipt-images/' + testPath);
     
     // Upload test image
-    const { error: uploadError } = await supabase.storage
-      .from('receipts')
+    console.log('Attempting upload with Supabase client...');
+    console.log('Bucket: receipt-images');
+    console.log('Path:', testPath);
+    console.log('Data size:', testImageData.byteLength, 'bytes');
+    
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('receipt-images')
       .upload(testPath, testImageData, {
         contentType: 'image/png',
         upsert: true
       });
+      
+    console.log('Upload response data:', uploadData);
+    console.log('Upload response error:', uploadError);
       
     if (uploadError) {
       return {
@@ -219,7 +312,7 @@ export async function testImageUploadDownload(): Promise<StorageSetupResult> {
     
     // Get public URL
     const { data: urlData } = supabase.storage
-      .from('receipts')
+      .from('receipt-images')
       .getPublicUrl(testPath);
       
     const publicUrl = urlData.publicUrl;
@@ -258,7 +351,7 @@ export async function testImageUploadDownload(): Promise<StorageSetupResult> {
     
     // Clean up - delete test image
     const { error: deleteError } = await supabase.storage
-      .from('receipts')
+      .from('receipt-images')
       .remove([testPath]);
       
     if (deleteError) {

@@ -17,7 +17,7 @@ import { LogOut, User, Mail, Shield, HelpCircle, Info, ChevronRight, Trash2, Dow
 import { Button } from '@/components/ui/Button';
 import { Colors } from '@/constants/design-system';
 import { router } from 'expo-router';
-import { checkStorageSetup, testImageUploadDownload } from '@/utils/storage-setup';
+import { checkStorageSetup, testImageUploadDownload, debugStorageConfiguration } from '@/utils/storage-setup';
 
 export default function SettingsScreen() {
   const { user, signOut, resetPassword } = useAuth();
@@ -26,6 +26,7 @@ export default function SettingsScreen() {
   const [isClearing, setIsClearing] = useState(false);
   const [isCheckingStorage, setIsCheckingStorage] = useState(false);
   const [isTestingStorage, setIsTestingStorage] = useState(false);
+  const [isDebuggingStorage, setIsDebuggingStorage] = useState(false);
   const insets = useSafeAreaInsets();
 
   const handleSignOut = async () => {
@@ -268,6 +269,37 @@ export default function SettingsScreen() {
     }
   };
 
+  const handleDebugStorage = async () => {
+    if (!user) {
+      Alert.alert('Sign In Required', 'Please sign in to debug storage.');
+      return;
+    }
+
+    setIsDebuggingStorage(true);
+    try {
+      const result = await debugStorageConfiguration();
+      
+      if (result.success) {
+        Alert.alert(
+          '✅ Storage Debug Complete',
+          result.message + '\n\nGenerated URL: ' + result.details?.generatedUrl,
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert(
+          '❌ Storage Debug Found Issues',
+          result.message,
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Storage debug error:', error);
+      Alert.alert('Error', 'Failed to debug storage. Please try again.');
+    } finally {
+      setIsDebuggingStorage(false);
+    }
+  };
+
   const handleTestImageUpload = async () => {
     if (!user) {
       Alert.alert('Sign In Required', 'Please sign in to test image upload.');
@@ -357,6 +389,14 @@ export default function SettingsScreen() {
       onPress: handleCheckStorageSetup,
       disabled: !user || isCheckingStorage,
       loading: isCheckingStorage,
+    },
+    {
+      icon: Info,
+      title: 'Debug Storage URLs',
+      subtitle: 'Check URL generation and bucket structure',
+      onPress: handleDebugStorage,
+      disabled: !user || isDebuggingStorage,
+      loading: isDebuggingStorage,
     },
     {
       icon: CheckCircle,
@@ -512,6 +552,7 @@ export default function SettingsScreen() {
                 ]}>
                   {item.loading ? (
                     item.title === 'Check Storage Setup' ? 'Checking...' :
+                    item.title === 'Debug Storage URLs' ? 'Debugging...' :
                     item.title === 'Test Image Upload' ? 'Testing...' :
                     item.title === 'Clear Local Data' ? 'Clearing...' :
                     item.title

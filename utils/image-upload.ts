@@ -50,13 +50,13 @@ export async function uploadImageToSupabase(
         console.error('Error listing buckets:', bucketsError);
       } else {
         console.log('Available buckets:', buckets?.map(b => b.name) || []);
-        const receiptBucket = buckets?.find(b => b.name === 'receipts');
+        const receiptBucket = buckets?.find(b => b.name === 'receipt-images');
         if (!receiptBucket) {
-          console.error('❌ receipts bucket not found!');
+          console.error('❌ receipt-images bucket not found!');
           console.log('Available buckets:', buckets?.map(b => ({ name: b.name, public: b.public })) || []);
-          throw new Error('Storage bucket "receipts" not found. Please create it in your Supabase dashboard.');
+          throw new Error('Storage bucket "receipt-images" not found. Please create it in your Supabase dashboard.');
         } else {
-          console.log('✅ receipts bucket found, public:', receiptBucket.public);
+          console.log('✅ receipt-images bucket found, public:', receiptBucket.public);
         }
       }
     } catch (bucketCheckError) {
@@ -121,7 +121,7 @@ export async function uploadImageToSupabase(
     console.log('Image data size:', imageData.byteLength, 'bytes');
     
     const { data, error } = await supabase.storage
-      .from('receipts')
+      .from('receipt-images')
       .upload(storagePath, imageData, {
         contentType: 'image/jpeg',
         upsert: false, // Don't overwrite existing files
@@ -137,7 +137,7 @@ export async function uploadImageToSupabase(
       
       // Provide more specific error messages
       if (error.message.includes('Bucket not found')) {
-        throw new Error('Storage bucket "receipts" not found. Please create it in your Supabase dashboard with public access enabled.');
+        throw new Error('Storage bucket "receipt-images" not found. Please create it in your Supabase dashboard with public access enabled.');
       } else if (error.message.includes('not allowed')) {
         throw new Error('Permission denied. Please check your storage policies in Supabase dashboard.');
       } else if (error.message.includes('already exists')) {
@@ -149,7 +149,7 @@ export async function uploadImageToSupabase(
         
         console.log('File exists, trying with new name:', newStoragePath);
         const { error: retryError } = await supabase.storage
-          .from('receipts')
+          .from('receipt-images')
           .upload(newStoragePath, imageData, {
             contentType: 'image/jpeg',
             upsert: false,
@@ -161,7 +161,7 @@ export async function uploadImageToSupabase(
         
         // Get the public URL for the retry
         const { data: retryUrlData } = supabase.storage
-          .from('receipts')
+          .from('receipt-images')
           .getPublicUrl(newStoragePath);
 
         const retryPublicUrl = retryUrlData.publicUrl;
@@ -180,7 +180,7 @@ export async function uploadImageToSupabase(
 
     // Get the public URL
     const { data: urlData } = supabase.storage
-      .from('receipts')
+      .from('receipt-images')
       .getPublicUrl(storagePath);
 
     const publicUrl = urlData.publicUrl;
@@ -241,18 +241,18 @@ export async function deleteImageFromSupabase(
     const url = new URL(sanitizedUrl);
     const pathParts = url.pathname.split('/');
     
-    // Find the storage path after /storage/v1/object/public/receipts/
-    const storageIndex = pathParts.findIndex(part => part === 'receipts');
+    // Find the storage path after /storage/v1/object/public/receipt-images/
+    const storageIndex = pathParts.findIndex(part => part === 'receipt-images');
     
     if (storageIndex === -1) {
-      throw new Error('Invalid image URL format - receipts bucket not found in path');
+      throw new Error('Invalid image URL format - receipt-images bucket not found in path');
     }
 
     const filePath = pathParts.slice(storageIndex + 1).join('/');
     console.log('File path to delete:', filePath);
 
     const { error } = await supabase.storage
-      .from('receipts')
+      .from('receipt-images')
       .remove([filePath]);
 
     if (error) {
