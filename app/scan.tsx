@@ -10,6 +10,7 @@ import { useReceipts } from '@/hooks/receipt-store-supabase';
 import { useAuth } from '@/hooks/auth-store';
 import { scanReceipt } from '@/utils/receipt-scanner';
 import { uploadImageToSupabase } from '@/utils/image-upload';
+import { checkStorageSetup, testImageUploadDownload } from '@/utils/storage-setup';
 import { Receipt, ReceiptScanResult } from '@/types/receipt';
 import { Button } from '@/components/ui/Button';
 import { Colors } from '@/constants/design-system';
@@ -160,6 +161,30 @@ export default function ScanScreen() {
       }
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const testStorageSetup = async () => {
+    console.log('Testing storage setup...');
+    const setupResult = await checkStorageSetup();
+    console.log('Storage setup result:', setupResult);
+    
+    if (setupResult.success) {
+      console.log('Testing image upload/download...');
+      const testResult = await testImageUploadDownload();
+      console.log('Image upload/download test result:', testResult);
+      
+      Alert.alert(
+        testResult.success ? 'Storage Test Passed' : 'Storage Test Failed',
+        testResult.message,
+        [{ text: 'OK' }]
+      );
+    } else {
+      Alert.alert(
+        'Storage Setup Issue',
+        setupResult.message,
+        [{ text: 'OK' }]
+      );
     }
   };
 
@@ -711,6 +736,18 @@ export default function ScanScreen() {
                   testID="save-button"
                 />
               </View>
+              
+              {user && (
+                <View style={styles.debugSection}>
+                  <Button
+                    title="Test Storage Setup"
+                    variant="secondary"
+                    onPress={testStorageSetup}
+                    style={styles.debugButton}
+                    testID="test-storage-button"
+                  />
+                </View>
+              )}
             </View>
           )}
         </View>
@@ -1070,5 +1107,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: 'white',
+  },
+  debugSection: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  debugButton: {
+    width: '100%',
   },
 });

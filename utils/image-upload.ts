@@ -72,7 +72,7 @@ export async function uploadImageToSupabase(
     
     // Create the storage path
     const sanitizedUserId = userId?.trim().replace(/[^a-zA-Z0-9._-]/g, '_');
-    const storagePath = sanitizedUserId ? `receipts/${sanitizedUserId}/${finalFileName}` : `receipts/anonymous/${finalFileName}`;
+    const storagePath = sanitizedUserId ? `${sanitizedUserId}/${finalFileName}` : `anonymous/${finalFileName}`;
     
     console.log('Storage path:', storagePath);
 
@@ -145,7 +145,7 @@ export async function uploadImageToSupabase(
         const timestamp = Date.now();
         const randomId = Math.random().toString(36).substring(2, 15);
         const newFileName = `receipt_${timestamp}_${randomId}.jpg`;
-        const newStoragePath = sanitizedUserId ? `receipts/${sanitizedUserId}/${newFileName}` : `receipts/anonymous/${newFileName}`;
+        const newStoragePath = sanitizedUserId ? `${sanitizedUserId}/${newFileName}` : `anonymous/${newFileName}`;
         
         console.log('File exists, trying with new name:', newStoragePath);
         const { error: retryError } = await supabase.storage
@@ -240,13 +240,15 @@ export async function deleteImageFromSupabase(
     // Extract the file path from the URL
     const url = new URL(sanitizedUrl);
     const pathParts = url.pathname.split('/');
-    const bucketIndex = pathParts.findIndex(part => part === 'receipts');
     
-    if (bucketIndex === -1) {
-      throw new Error('Invalid image URL format');
+    // Find the storage path after /storage/v1/object/public/receipts/
+    const storageIndex = pathParts.findIndex(part => part === 'receipts');
+    
+    if (storageIndex === -1) {
+      throw new Error('Invalid image URL format - receipts bucket not found in path');
     }
 
-    const filePath = pathParts.slice(bucketIndex + 1).join('/');
+    const filePath = pathParts.slice(storageIndex + 1).join('/');
     console.log('File path to delete:', filePath);
 
     const { error } = await supabase.storage

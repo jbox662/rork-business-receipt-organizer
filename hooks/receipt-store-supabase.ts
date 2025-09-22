@@ -39,7 +39,11 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
 
         console.log('Loaded receipts from Supabase:', data?.length || 0, 'receipts');
         if (data && data.length > 0) {
-          console.log('Sample receipt image URLs:', data.slice(0, 3).map(r => ({ id: r.id, image_url: r.image_url })));
+          console.log('Sample receipt image URLs:', data.slice(0, 3).map(r => ({ 
+            id: r.id, 
+            image_url: r.image_url,
+            image_url_valid: !!(r.image_url && r.image_url.trim() !== '' && (r.image_url.startsWith('http') || r.image_url.startsWith('data:') || r.image_url.startsWith('file:')))
+          })));
         }
 
         // Transform Supabase data to match local Receipt type
@@ -212,7 +216,7 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
               category: receipt.category,
               receipt_date: receipt.receiptDate,
               items: receipt.items || [],
-              image_url: receipt.imageUri && receipt.imageUri.trim() !== '' && (receipt.imageUri.startsWith('http') || receipt.imageUri.startsWith('data:') || receipt.imageUri.startsWith('file:')) ? receipt.imageUri : null,
+              image_url: receipt.imageUri && receipt.imageUri.trim() !== '' && (receipt.imageUri.startsWith('http') || receipt.imageUri.startsWith('data:') || receipt.imageUri.startsWith('file:')) ? receipt.imageUri.trim() : null,
               notes: receipt.notes || null,
               payment_method: receipt.paymentMethod || null,
             })
