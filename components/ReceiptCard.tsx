@@ -1,13 +1,12 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, useWindowDimensions, Animated, PanResponder, Alert, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, useWindowDimensions, Animated, PanResponder, Alert } from 'react-native';
 import { Receipt } from '@/types/receipt';
 import { Calendar, DollarSign, Tag, Edit3, Trash2 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Colors, Shadows, BorderRadius, Spacing, Typography } from '@/constants/design-system';
 import { useReceipts } from '@/hooks/receipt-store-supabase';
 
-const { width: screenWidth } = Dimensions.get('window');
-const SWIPE_THRESHOLD = screenWidth * 0.25;
+
 
 interface ReceiptCardProps {
   receipt: Receipt;
@@ -16,6 +15,7 @@ interface ReceiptCardProps {
 export function ReceiptCard({ receipt }: ReceiptCardProps) {
   const { width: screenWidth } = useWindowDimensions();
   const isSmallScreen = screenWidth < 400;
+  const SWIPE_THRESHOLD = screenWidth * 0.25;
   const { deleteReceipt } = useReceipts();
   const [isDeleting, setIsDeleting] = useState(false);
   
@@ -69,35 +69,70 @@ export function ReceiptCard({ receipt }: ReceiptCardProps) {
     router.push(`/receipt/edit/${receipt.id}`);
   };
   
+  // Track current swipe state
+  const [isSwipedOpen, setIsSwipedOpen] = useState(false);
+  
   // Pan responder for swipe gestures
   const panResponder = PanResponder.create({
     onMoveShouldSetPanResponder: (_, gestureState) => {
       return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dy) < 50;
     },
     onPanResponderGrant: () => {
-      translateX.setOffset((translateX as any)._value);
+      // No offset manipulation needed
     },
     onPanResponderMove: (_, gestureState) => {
-      // Only allow left swipe (negative dx)
-      if (gestureState.dx < 0) {
-        translateX.setValue(gestureState.dx);
+      const currentValue = isSwipedOpen ? -120 : 0;
+      const newValue = currentValue + gestureState.dx;
+      
+      // Constrain the movement
+      if (newValue <= 0 && newValue >= -120) {
+        translateX.setValue(newValue);
       }
     },
     onPanResponderRelease: (_, gestureState) => {
-      translateX.flattenOffset();
+      const currentValue = isSwipedOpen ? -120 : 0;
+      const finalPosition = currentValue + gestureState.dx;
       
-      if (gestureState.dx < -SWIPE_THRESHOLD) {
-        // Swipe left to reveal actions
-        Animated.spring(translateX, {
-          toValue: -120,
-          useNativeDriver: true,
-        }).start();
+      if (isSwipedOpen) {
+        // If already open, check if we should close
+        if (gestureState.dx > 30 || finalPosition > -60) {
+          // Close the swipe
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 100,
+            friction: 8,
+          }).start();
+          setIsSwipedOpen(false);
+        } else {
+          // Keep it open
+          Animated.spring(translateX, {
+            toValue: -120,
+            useNativeDriver: true,
+            tension: 100,
+            friction: 8,
+          }).start();
+        }
       } else {
-        // Snap back
-        Animated.spring(translateX, {
-          toValue: 0,
-          useNativeDriver: true,
-        }).start();
+        // If closed, check if we should open
+        if (gestureState.dx < -SWIPE_THRESHOLD) {
+          // Open the swipe
+          Animated.spring(translateX, {
+            toValue: -120,
+            useNativeDriver: true,
+            tension: 100,
+            friction: 8,
+          }).start();
+          setIsSwipedOpen(true);
+        } else {
+          // Keep it closed
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 100,
+            friction: 8,
+          }).start();
+        }
       }
     },
   });
@@ -106,7 +141,10 @@ export function ReceiptCard({ receipt }: ReceiptCardProps) {
     Animated.spring(translateX, {
       toValue: 0,
       useNativeDriver: true,
+      tension: 100,
+      friction: 8,
     }).start();
+    setIsSwipedOpen(false);
   };
   
   if (isDeleting) {
