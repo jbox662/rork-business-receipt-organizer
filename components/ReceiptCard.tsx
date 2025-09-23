@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, useWindowDimensions, Animated, PanResponder, Alert } from 'react-native';
 import { Receipt } from '@/types/receipt';
 import { Calendar, DollarSign, Tag, Edit3, Trash2 } from 'lucide-react-native';
@@ -30,6 +30,10 @@ export function ReceiptCard({ receipt }: ReceiptCardProps) {
   const opacity = useRef(new Animated.Value(1)).current;
   
   const handlePress = () => {
+    if (isSwipedOpen) {
+      resetSwipe();
+      return;
+    }
     router.push(`/receipt/${receipt.id}`);
   };
   
@@ -71,6 +75,53 @@ export function ReceiptCard({ receipt }: ReceiptCardProps) {
   
   // Track current swipe state
   const [isSwipedOpen, setIsSwipedOpen] = useState(false);
+  const autoResetTimer = useRef<NodeJS.Timeout | null>(null);
+  
+  // Clear timer function
+  const clearAutoResetTimer = useCallback(() => {
+    if (autoResetTimer.current) {
+      clearTimeout(autoResetTimer.current);
+      autoResetTimer.current = null;
+    }
+  }, []);
+  
+  // Reset swipe function
+  const resetSwipe = useCallback(() => {
+    Animated.spring(translateX, {
+      toValue: 0,
+      useNativeDriver: true,
+      tension: 100,
+      friction: 8,
+    }).start();
+    setIsSwipedOpen(false);
+    clearAutoResetTimer();
+  }, [translateX, clearAutoResetTimer]);
+  
+  // Auto-reset timer function
+  const startAutoResetTimer = useCallback(() => {
+    if (autoResetTimer.current) {
+      clearTimeout(autoResetTimer.current);
+    }
+    autoResetTimer.current = setTimeout(() => {
+      resetSwipe();
+    }, 3000);
+  }, [resetSwipe]);
+  
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      clearAutoResetTimer();
+    };
+  }, [clearAutoResetTimer]);
+  
+  // Start timer when swipe opens
+  useEffect(() => {
+    if (isSwipedOpen) {
+      startAutoResetTimer();
+    } else {
+      clearAutoResetTimer();
+    }
+  }, [isSwipedOpen, startAutoResetTimer, clearAutoResetTimer]);
   
   // Pan responder for swipe gestures
   const panResponder = PanResponder.create({
@@ -78,7 +129,8 @@ export function ReceiptCard({ receipt }: ReceiptCardProps) {
       return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dy) < 50;
     },
     onPanResponderGrant: () => {
-      // No offset manipulation needed
+      // Clear auto-reset timer when user starts interacting
+      clearAutoResetTimer();
     },
     onPanResponderMove: (_, gestureState) => {
       const currentValue = isSwipedOpen ? -120 : 0;
@@ -104,6 +156,7 @@ export function ReceiptCard({ receipt }: ReceiptCardProps) {
             friction: 8,
           }).start();
           setIsSwipedOpen(false);
+          clearAutoResetTimer();
         } else {
           // Keep it open
           Animated.spring(translateX, {
@@ -124,6 +177,7 @@ export function ReceiptCard({ receipt }: ReceiptCardProps) {
             friction: 8,
           }).start();
           setIsSwipedOpen(true);
+          startAutoResetTimer();
         } else {
           // Keep it closed
           Animated.spring(translateX, {
@@ -137,15 +191,7 @@ export function ReceiptCard({ receipt }: ReceiptCardProps) {
     },
   });
   
-  const resetSwipe = () => {
-    Animated.spring(translateX, {
-      toValue: 0,
-      useNativeDriver: true,
-      tension: 100,
-      friction: 8,
-    }).start();
-    setIsSwipedOpen(false);
-  };
+
   
   if (isDeleting) {
     return null;
