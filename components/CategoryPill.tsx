@@ -2,7 +2,7 @@ import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import * as Icons from 'lucide-react-native';
 import { Category } from '@/types/receipt';
-import { Colors, Spacing, BorderRadius, Shadows } from '@/constants/design-system';
+import { Colors, Spacing, BorderRadius, Shadows, Typography } from '@/constants/design-system';
 
 interface CategoryPillProps {
   category: Category;
@@ -69,13 +69,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   text: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: Typography.xs,
+    fontWeight: Typography.semibold,
     letterSpacing: 0.3,
     textAlign: 'center',
   },
   selectedText: {
-    fontWeight: '700',
+    fontWeight: Typography.bold,
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 0, height: 0.5 },
     textShadowRadius: 1,
@@ -104,10 +104,10 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 10,
     color: Colors.gray800,
-    fontWeight: '600',
+    fontWeight: Typography.semibold,
   },
   selectedBadgeText: {
     color: Colors.gray900,
-    fontWeight: '900',
+    fontWeight: Typography.bold,
   },
 });

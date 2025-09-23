@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Platform } from 'react
 import { Receipt } from '@/types/receipt';
 import { Calendar, DollarSign, Tag } from 'lucide-react-native';
 import { router } from 'expo-router';
-import { Colors, Shadows, BorderRadius, Spacing } from '@/constants/design-system';
+import { Colors, Shadows, BorderRadius, Spacing, Typography } from '@/constants/design-system';
 
 interface ReceiptCardProps {
   receipt: Receipt;
@@ -98,33 +98,33 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: Spacing.md,
     justifyContent: 'space-between',
     minWidth: 0,
   },
   merchant: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: Typography.base,
+    fontWeight: Typography.bold,
     color: Colors.gray900,
-    marginBottom: 4,
+    marginBottom: Spacing.xs,
   },
   info: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 8,
+    gap: Spacing.md,
+    marginBottom: Spacing.sm,
     flexWrap: 'wrap',
   },
   infoItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: Spacing.xs,
     flex: 1,
     minWidth: 0,
   },
   infoText: {
-    fontSize: 12,
+    fontSize: Typography.xs,
     color: Colors.gray600,
-    fontWeight: '500',
+    fontWeight: Typography.medium,
     flex: 1,
   },
   footer: {
@@ -138,14 +138,14 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   total: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: Typography.lg,
+    fontWeight: Typography.bold,
     color: Colors.secondary,
   },
   itemCount: {
-    fontSize: 12,
+    fontSize: Typography.xs,
     color: Colors.gray500,
-    fontWeight: '500',
+    fontWeight: Typography.medium,
   },
   placeholderImage: {
     width: '100%',
@@ -157,6 +157,6 @@ const styles = StyleSheet.create({
   placeholderText: {
     fontSize: 10,
     color: Colors.gray500,
-    fontWeight: '600',
+    fontWeight: Typography.semibold,
   },
 });

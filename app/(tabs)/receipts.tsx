@@ -8,7 +8,7 @@ import { ReceiptCard } from '@/components/ReceiptCard';
 import { CategoryPill } from '@/components/CategoryPill';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, Shadows, BorderRadius, Spacing } from '@/constants/design-system';
+import { Colors, Shadows, BorderRadius, Spacing, CommonStyles, Typography } from '@/constants/design-system';
 
 export default function ReceiptsScreen() {
   const { 
@@ -52,7 +52,7 @@ export default function ReceiptsScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={CommonStyles.loadingContainer}>
         <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
@@ -146,18 +146,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.gray50,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
-    gap: 12,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.sm,
+    gap: Spacing.md,
   },
   searchBar: {
     flex: 1,
@@ -173,54 +168,54 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    marginLeft: 8,
-    fontSize: 16,
+    marginLeft: Spacing.sm,
+    fontSize: Typography.base,
     color: Colors.gray900,
-    fontWeight: '500',
+    fontWeight: Typography.medium,
   },
   categoriesWrapper: {
     backgroundColor: Colors.gray50,
-    paddingTop: 8,
-    paddingBottom: 16,
-    marginBottom: 8,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
   categoriesContainer: {
     maxHeight: 50,
   },
   categoriesContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: Spacing.lg,
   },
   resultsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-    paddingTop: 4,
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.md,
+    paddingTop: Spacing.xs,
   },
   resultsCount: {
-    fontSize: 14,
+    fontSize: Typography.sm,
     color: Colors.gray600,
-    fontWeight: '600',
+    fontWeight: Typography.semibold,
   },
   listContent: {
     paddingBottom: 100,
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 20,
+    paddingVertical: Spacing['5xl'],
+    paddingHorizontal: Spacing.xl,
   },
   emptyText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: Typography.base,
+    fontWeight: Typography.semibold,
     color: Colors.gray600,
-    marginTop: 12,
+    marginTop: Spacing.md,
   },
   emptySubtext: {
-    fontSize: 14,
+    fontSize: Typography.sm,
     color: Colors.gray500,
-    marginTop: 4,
+    marginTop: Spacing.xs,
     textAlign: 'center',
   },
   refreshButton: {
@@ -241,14 +236,14 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '180deg' }],
   },
   autoRefreshText: {
-    fontSize: 12,
+    fontSize: Typography.xs,
     color: Colors.secondary,
-    fontWeight: '600',
+    fontWeight: Typography.semibold,
   },
   fab: {
     position: 'absolute',
-    bottom: 24,
-    right: 24,
+    bottom: Spacing['2xl'],
+    right: Spacing['2xl'],
     width: 56,
     height: 56,
     borderRadius: 28,
