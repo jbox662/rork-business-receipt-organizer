@@ -425,31 +425,33 @@ const styles = StyleSheet.create({
   categoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: Spacing.lg,
-    paddingHorizontal: 0,
-    minHeight: 44,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.md,
+    minHeight: 56,
+    backgroundColor: Colors.gray50,
+    borderRadius: BorderRadius.md,
   },
 
   categoryInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    marginRight: Spacing.md,
     minWidth: 0,
   },
   categoryDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: Spacing.sm,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    marginRight: Spacing.md,
     flexShrink: 0,
   },
   categoryName: {
     fontSize: Typography.sm,
-    color: Colors.gray700,
-    fontWeight: Typography.medium,
+    color: Colors.gray800,
+    fontWeight: Typography.semibold,
     flex: 1,
-    marginRight: Spacing.xs,
   },
 
   categoryCount: {
@@ -459,15 +461,17 @@ const styles = StyleSheet.create({
   },
   categoryStats: {
     alignItems: 'flex-end',
-    width: 90,
+    justifyContent: 'center',
+    minWidth: 90,
     flexShrink: 0,
   },
 
   categoryAmount: {
-    fontSize: Typography.sm,
-    fontWeight: Typography.semibold,
+    fontSize: Typography.base,
+    fontWeight: Typography.bold,
     color: Colors.gray900,
     textAlign: 'right',
+    lineHeight: 20,
   },
 
   categoryPercentage: {
@@ -475,7 +479,8 @@ const styles = StyleSheet.create({
     color: Colors.gray500,
     fontWeight: Typography.medium,
     textAlign: 'right',
-    marginTop: 2,
+    marginTop: 1,
+    lineHeight: 14,
   },
 
   viewAllButton: {
