@@ -137,7 +137,7 @@ export default function DashboardScreen() {
             style={styles.quickActionContent}
           >
             <Camera size={24} color="white" />
-            <Text style={styles.quickActionTextPrimary}>Scan Receipt</Text>
+            <Text style={styles.quickActionTextPrimary} numberOfLines={2}>Scan Receipt</Text>
           </LinearGradient>
         </TouchableOpacity>
         
@@ -148,7 +148,7 @@ export default function DashboardScreen() {
         >
           <View style={styles.quickActionContent}>
             <BarChart3 size={24} color={Colors.accent} />
-            <Text style={styles.quickActionLabel}>Analytics</Text>
+            <Text style={styles.quickActionLabel} numberOfLines={2}>Analytics</Text>
           </View>
         </TouchableOpacity>
         
@@ -159,7 +159,7 @@ export default function DashboardScreen() {
         >
           <View style={styles.quickActionContent}>
             <FileText size={24} color={Colors.secondary} />
-            <Text style={styles.quickActionLabel}>All Receipts</Text>
+            <Text style={styles.quickActionLabel} numberOfLines={2}>All Receipts</Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -343,7 +343,8 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
     overflow: 'hidden',
     ...Shadows.lg,
-    height: 80,
+    height: 88,
+    minWidth: 0,
   },
   quickActionContent: {
     backgroundColor: Colors.white,
@@ -351,23 +352,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     gap: 8,
     borderWidth: 1,
     borderColor: Colors.gray100,
     height: '100%',
+    minWidth: 0,
   },
   quickActionTextPrimary: {
     color: 'white',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '700',
     textAlign: 'center',
+    flexShrink: 1,
   },
   quickActionLabel: {
     color: Colors.gray700,
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
+    flexShrink: 1,
   },
   statsGrid: {
     flexDirection: 'row',
