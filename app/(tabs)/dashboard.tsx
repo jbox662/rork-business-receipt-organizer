@@ -128,16 +128,16 @@ export default function DashboardScreen() {
       {/* Quick Actions */}
       <View style={styles.quickActionsContainer}>
         <TouchableOpacity 
-          style={[styles.quickAction, styles.primaryAction]}
+          style={styles.quickAction}
           onPress={() => router.push('/scan')}
           activeOpacity={0.8}
         >
           <LinearGradient
             colors={[Colors.primary, Colors.primaryLight]}
-            style={styles.quickActionGradient}
+            style={styles.quickActionContent}
           >
             <Camera size={24} color="white" />
-            <Text style={styles.quickActionText}>Scan Receipt</Text>
+            <Text style={styles.quickActionTextPrimary}>Scan Receipt</Text>
           </LinearGradient>
         </TouchableOpacity>
         
@@ -147,7 +147,7 @@ export default function DashboardScreen() {
           activeOpacity={0.8}
         >
           <View style={styles.quickActionContent}>
-            <BarChart3 size={20} color={Colors.accent} />
+            <BarChart3 size={24} color={Colors.accent} />
             <Text style={styles.quickActionLabel}>Analytics</Text>
           </View>
         </TouchableOpacity>
@@ -158,7 +158,7 @@ export default function DashboardScreen() {
           activeOpacity={0.8}
         >
           <View style={styles.quickActionContent}>
-            <FileText size={20} color={Colors.secondary} />
+            <FileText size={24} color={Colors.secondary} />
             <Text style={styles.quickActionLabel}>All Receipts</Text>
           </View>
         </TouchableOpacity>
@@ -341,38 +341,31 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
     overflow: 'hidden',
     ...Shadows.lg,
-  },
-  primaryAction: {
-    flex: 1.5,
-  },
-  quickActionGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    gap: 8,
+    height: 80,
   },
   quickActionContent: {
     backgroundColor: Colors.white,
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
     paddingHorizontal: 12,
-    gap: 6,
+    gap: 8,
     borderWidth: 1,
     borderColor: Colors.gray100,
+    height: '100%',
   },
-  quickActionText: {
+  quickActionTextPrimary: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
+    textAlign: 'center',
   },
   quickActionLabel: {
     color: Colors.gray700,
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
+    textAlign: 'center',
   },
   statsGrid: {
     flexDirection: 'row',
