@@ -14,6 +14,9 @@ export default function AnalyticsScreen() {
   const [selectedTimeframe, setSelectedTimeframe] = React.useState<'month' | 'quarter' | 'year'>('month');
   
   const isSmallScreen = screenWidth < 400;
+
+  const cardMargin = isSmallScreen ? Spacing.md : Spacing.lg;
+  const cardPadding = isSmallScreen ? Spacing.lg : Spacing.xl;
   
   const avgReceiptValue = totals.count > 0 ? totals.total / totals.count : 0;
   
@@ -121,7 +124,7 @@ export default function AnalyticsScreen() {
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: Spacing['3xl'] }}
     >
-      <View style={[styles.summaryCard, isSmallScreen && styles.summaryCardSmall]}>
+      <View style={[styles.summaryCard, { margin: cardMargin, padding: cardPadding }]}>
         <Text style={styles.summaryTitle}>Expense Summary</Text>
         <View style={[styles.summaryStats, isSmallScreen && styles.summaryStatsSmall]}>
           <View style={styles.summaryItem}>
@@ -151,17 +154,17 @@ export default function AnalyticsScreen() {
       </View>
 
       {/* Tax Preparation Section */}
-      <View style={[styles.section, isSmallScreen && styles.sectionSmall]}>
-        <View style={[styles.sectionHeader, isSmallScreen && styles.sectionHeaderSmall]}>
+      <View style={[styles.section, { marginHorizontal: cardMargin, padding: cardPadding }]}>
+        <View style={[styles.sectionHeader, isSmallScreen && { flexWrap: 'wrap' }]}>
           <FileText size={isSmallScreen ? 18 : 20} color={Colors.accent} />
           <Text style={[styles.sectionTitle, { flex: 1 }]}>Tax Preparation</Text>
-          <TouchableOpacity onPress={exportTaxData} style={[styles.exportButton, isSmallScreen && styles.exportButtonSmall]}>
+          <TouchableOpacity onPress={exportTaxData} style={[styles.exportButton, isSmallScreen && { paddingHorizontal: Spacing.sm, paddingVertical: Spacing.xs }]}>
             <Download size={14} color={Colors.accent} />
             <Text style={styles.exportButtonText}>Export</Text>
           </TouchableOpacity>
         </View>
         
-        <View style={[styles.taxSummary, isSmallScreen && styles.taxSummarySmall]}>
+        <View style={[styles.taxSummary, isSmallScreen && { flexDirection: 'column', gap: Spacing.md }]}>
           <View style={styles.taxItem}>
             <Text style={styles.taxLabel}>Deductible Expenses</Text>
             <Text style={styles.taxValue}>${taxDeductibleExpenses.total.toFixed(2)}</Text>
@@ -182,7 +185,7 @@ export default function AnalyticsScreen() {
       </View>
 
       {/* Merchant Insights */}
-      <View style={[styles.section, isSmallScreen && styles.sectionSmall]}>
+      <View style={[styles.section, { marginHorizontal: cardMargin, padding: cardPadding }]}>
         <View style={styles.sectionHeader}>
           <Store size={isSmallScreen ? 18 : 20} color={Colors.orange} />
           <Text style={styles.sectionTitle}>Top Merchants</Text>
@@ -223,7 +226,7 @@ export default function AnalyticsScreen() {
         )}
       </View>
 
-      <View style={[styles.section, isSmallScreen && styles.sectionSmall]}>
+      <View style={[styles.section, { marginHorizontal: cardMargin, padding: cardPadding }]}>
         <View style={styles.sectionHeader}>
           <PieChart size={isSmallScreen ? 18 : 20} color={Colors.primary} />
           <Text style={styles.sectionTitle}>Top Categories</Text>
@@ -231,18 +234,18 @@ export default function AnalyticsScreen() {
         </View>
         
         {categoryStats.filter((cat: any) => cat.total > 0).map((category: any) => (
-          <View key={category.id} style={[styles.categoryRow, isSmallScreen && styles.categoryRowSmall]}>
+          <View key={category.id} style={styles.categoryRow}>
             <View style={styles.categoryInfo}>
               <View style={[styles.categoryDot, { backgroundColor: category.color }]} />
-              <Text style={[styles.categoryName, isSmallScreen && styles.categoryNameSmall]} numberOfLines={1}>
+              <Text style={[styles.categoryName, isSmallScreen && { fontSize: Typography.xs }]} numberOfLines={1}>
                 {category.name}
               </Text>
             </View>
-            <View style={[styles.categoryStats, isSmallScreen && styles.categoryStatsSmall]}>
-              <Text style={[styles.categoryAmount, isSmallScreen && styles.categoryAmountSmall]}>
+            <View style={styles.categoryStats}>
+              <Text style={[styles.categoryAmount, isSmallScreen && { fontSize: Typography.xs }]}>
                 ${category.total.toFixed(2)}
               </Text>
-              <Text style={[styles.categoryPercentage, isSmallScreen && styles.categoryPercentageSmall]}>
+              <Text style={[styles.categoryPercentage, isSmallScreen && { fontSize: 10 }]}>
                 {category.percentage.toFixed(1)}%
               </Text>
             </View>
@@ -254,8 +257,8 @@ export default function AnalyticsScreen() {
         )}
       </View>
 
-      <View style={[styles.section, isSmallScreen && styles.sectionSmall]}>
-        <View style={[styles.sectionHeader, isSmallScreen && styles.sectionHeaderSmall]}>
+      <View style={[styles.section, { marginHorizontal: cardMargin, padding: cardPadding }]}>
+        <View style={[styles.sectionHeader, isSmallScreen && { flexWrap: 'wrap' }]}>
           <Calendar size={isSmallScreen ? 18 : 20} color={Colors.primary} />
           <Text style={[styles.sectionTitle, { flex: 1 }]}>Spending Trends</Text>
           <View style={styles.timeframeSelector}>
@@ -266,7 +269,7 @@ export default function AnalyticsScreen() {
                 style={[
                   styles.timeframeButton,
                   selectedTimeframe === timeframe && styles.timeframeButtonActive,
-                  isSmallScreen && styles.timeframeButtonSmall
+                  isSmallScreen && { width: 24, height: 24, borderRadius: 12 }
                 ]}
               >
                 <Text style={[
@@ -331,7 +334,7 @@ export default function AnalyticsScreen() {
         )}
       </View>
 
-      <View style={[styles.insightCard, isSmallScreen && styles.insightCardSmall]}>
+      <View style={[styles.insightCard, { marginHorizontal: cardMargin, padding: cardPadding }]}>
         <Text style={styles.insightTitle}>💡 Smart Insights</Text>
         <Text style={styles.insightText}>
           {totals.count > 20 
@@ -359,10 +362,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.gray100,
   },
-  summaryCardSmall: {
-    margin: Spacing.md,
-    padding: Spacing.lg,
-  },
+
   summaryTitle: {
     ...CommonStyles.heading3,
     marginBottom: Spacing.lg,
@@ -411,20 +411,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.gray100,
   },
-  sectionSmall: {
-    marginHorizontal: Spacing.md,
-    padding: Spacing.lg,
-  },
+
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
     marginBottom: Spacing.lg,
   },
-  sectionHeaderSmall: {
-    flexWrap: 'wrap',
-    gap: Spacing.xs,
-  },
+
   sectionTitle: {
     ...CommonStyles.heading4,
   },
@@ -433,11 +427,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Spacing.lg,
-    paddingRight: Spacing.xs,
+    paddingHorizontal: Spacing.xs,
+    minHeight: 44,
   },
-  categoryRowSmall: {
-    paddingRight: 0,
-  },
+
   categoryInfo: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -457,9 +450,7 @@ const styles = StyleSheet.create({
     fontWeight: Typography.medium,
     flex: 1,
   },
-  categoryNameSmall: {
-    fontSize: Typography.xs,
-  },
+
   categoryCount: {
     fontSize: Typography.xs,
     color: Colors.gray400,
@@ -470,18 +461,14 @@ const styles = StyleSheet.create({
     minWidth: 80,
     flexShrink: 0,
   },
-  categoryStatsSmall: {
-    minWidth: 70,
-  },
+
   categoryAmount: {
     fontSize: Typography.sm,
     fontWeight: Typography.semibold,
     color: Colors.gray900,
     textAlign: 'right',
   },
-  categoryAmountSmall: {
-    fontSize: Typography.xs,
-  },
+
   categoryPercentage: {
     fontSize: Typography.xs,
     color: Colors.gray500,
@@ -489,9 +476,7 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginTop: 2,
   },
-  categoryPercentageSmall: {
-    fontSize: 10,
-  },
+
   viewAllButton: {
     fontSize: Typography.xs,
     color: Colors.primary,
@@ -552,10 +537,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.primaryLight + '20',
   },
-  insightCardSmall: {
-    marginHorizontal: Spacing.md,
-    padding: Spacing.md,
-  },
+
   insightTitle: {
     fontSize: Typography.sm,
     fontWeight: Typography.semibold,
@@ -578,10 +560,7 @@ const styles = StyleSheet.create({
     marginLeft: 'auto',
     ...Shadows.sm,
   },
-  exportButtonSmall: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-  },
+
   exportButtonText: {
     fontSize: Typography.xs,
     color: Colors.accent,
@@ -595,10 +574,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     marginBottom: Spacing.sm,
   },
-  taxSummarySmall: {
-    flexDirection: 'column',
-    gap: Spacing.md,
-  },
+
   taxItem: {
     alignItems: 'center',
     flex: 1,
@@ -683,11 +659,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...Shadows.sm,
   },
-  timeframeButtonSmall: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-  },
+
   timeframeButtonActive: {
     backgroundColor: Colors.primary,
   },

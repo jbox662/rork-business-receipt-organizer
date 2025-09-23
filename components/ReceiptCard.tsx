@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, useWindowDimensions } from 'react-native';
 import { Receipt } from '@/types/receipt';
 import { Calendar, DollarSign, Tag } from 'lucide-react-native';
 import { router } from 'expo-router';
@@ -10,6 +10,9 @@ interface ReceiptCardProps {
 }
 
 export function ReceiptCard({ receipt }: ReceiptCardProps) {
+  const { width: screenWidth } = useWindowDimensions();
+  const isSmallScreen = screenWidth < 400;
+  
   console.log('ReceiptCard render - Receipt ID:', receipt.id);
   console.log('ReceiptCard render - Image URI:', receipt.imageUri);
   console.log('ReceiptCard render - Platform:', Platform.OS);
@@ -20,8 +23,8 @@ export function ReceiptCard({ receipt }: ReceiptCardProps) {
   };
 
   return (
-    <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.7}>
-      <View style={styles.imageContainer}>
+    <TouchableOpacity style={[styles.card, isSmallScreen && styles.cardSmall]} onPress={handlePress} activeOpacity={0.7}>
+      <View style={[styles.imageContainer, isSmallScreen && styles.imageContainerSmall]}>
         {receipt.imageUri && receipt.imageUri.trim() !== '' && (receipt.imageUri.startsWith('http') || receipt.imageUri.startsWith('data:') || receipt.imageUri.startsWith('file:')) ? (
           <Image 
             source={{ uri: receipt.imageUri }} 
@@ -43,28 +46,28 @@ export function ReceiptCard({ receipt }: ReceiptCardProps) {
       </View>
       
       <View style={styles.content}>
-        <Text style={styles.merchant} numberOfLines={1}>{receipt.merchant}</Text>
+        <Text style={[styles.merchant, isSmallScreen && styles.merchantSmall]} numberOfLines={1}>{receipt.merchant}</Text>
         
-        <View style={styles.info}>
+        <View style={[styles.info, isSmallScreen && styles.infoSmall]}>
           <View style={styles.infoItem}>
             <Calendar size={14} color={Colors.gray500} />
-            <Text style={styles.infoText} numberOfLines={1}>
+            <Text style={[styles.infoText, isSmallScreen && styles.infoTextSmall]} numberOfLines={1}>
               {new Date(receipt.receiptDate).toLocaleDateString()}
             </Text>
           </View>
           
           <View style={styles.infoItem}>
             <Tag size={14} color={Colors.gray500} />
-            <Text style={styles.infoText} numberOfLines={1}>{receipt.category}</Text>
+            <Text style={[styles.infoText, isSmallScreen && styles.infoTextSmall]} numberOfLines={1}>{receipt.category}</Text>
           </View>
         </View>
         
         <View style={styles.footer}>
           <View style={styles.amount}>
             <DollarSign size={16} color={Colors.secondary} />
-            <Text style={styles.total}>${receipt.total.toFixed(2)}</Text>
+            <Text style={[styles.total, isSmallScreen && styles.totalSmall]}>${receipt.total.toFixed(2)}</Text>
           </View>
-          <Text style={styles.itemCount}>{receipt.items.length} items</Text>
+          <Text style={[styles.itemCount, isSmallScreen && styles.itemCountSmall]}>{receipt.items.length} items</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -82,6 +85,12 @@ const styles = StyleSheet.create({
     ...Shadows.lg,
     borderWidth: 1,
     borderColor: Colors.gray100,
+    minHeight: 100,
+  },
+  cardSmall: {
+    marginHorizontal: Spacing.md,
+    padding: Spacing.md,
+    minHeight: 90,
   },
   imageContainer: {
     width: 80,
@@ -90,6 +99,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: Colors.gray100,
     ...Shadows.sm,
+    flexShrink: 0,
+  },
+  imageContainerSmall: {
+    width: 60,
+    height: 60,
   },
   thumbnail: {
     width: '100%',
@@ -108,11 +122,18 @@ const styles = StyleSheet.create({
     color: Colors.gray900,
     marginBottom: Spacing.xs,
   },
+  merchantSmall: {
+    fontSize: Typography.sm,
+  },
   info: {
     flexDirection: 'row',
     gap: Spacing.md,
     marginBottom: Spacing.sm,
     flexWrap: 'wrap',
+  },
+  infoSmall: {
+    flexDirection: 'column',
+    gap: Spacing.xs,
   },
   infoItem: {
     flexDirection: 'row',
@@ -126,6 +147,10 @@ const styles = StyleSheet.create({
     color: Colors.gray600,
     fontWeight: Typography.medium,
     flex: 1,
+  },
+  infoTextSmall: {
+    fontSize: 10,
+    flex: 0,
   },
   footer: {
     flexDirection: 'row',
@@ -142,10 +167,16 @@ const styles = StyleSheet.create({
     fontWeight: Typography.bold,
     color: Colors.secondary,
   },
+  totalSmall: {
+    fontSize: Typography.base,
+  },
   itemCount: {
     fontSize: Typography.xs,
     color: Colors.gray500,
     fontWeight: Typography.medium,
+  },
+  itemCountSmall: {
+    fontSize: 10,
   },
   placeholderImage: {
     width: '100%',
