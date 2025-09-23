@@ -26,44 +26,80 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
     queryFn: async () => {
       if (user) {
         console.log('Loading receipts from Supabase for user:', user.id);
-        const { data, error } = await supabase
-          .from('receipts')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+        try {
+          const { data, error } = await supabase
+            .from('receipts')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
 
-        if (error) {
-          console.error('Error loading receipts from Supabase:', error);
-          throw error;
+          if (error) {
+            console.error('Error loading receipts from Supabase:', {
+              message: error.message,
+              details: error.details,
+              hint: error.hint,
+              code: error.code
+            });
+            
+            // Check for common connection issues
+            if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('fetch')) {
+              throw new Error('Network connection failed. Please check your internet connection and try again.');
+            }
+            
+            // Check for authentication issues
+            if (error.code === '401' || error.message.includes('JWT') || error.message.includes('unauthorized')) {
+              throw new Error('Authentication failed. Please sign in again.');
+            }
+            
+            // Check for table/database issues
+            if (error.code === '42P01' || error.message.includes('does not exist')) {
+              throw new Error('Database table not found. Please contact support.');
+            }
+            
+            throw new Error(`Failed to load receipts: ${error.message}`);
+          }
+
+          console.log('Loaded receipts from Supabase:', data?.length || 0, 'receipts');
+          if (data && data.length > 0) {
+            console.log('Sample receipt image URLs:', data.slice(0, 3).map((r: any) => ({ 
+              id: r.id, 
+              image_url: r.image_url,
+              image_url_valid: !!(r.image_url && r.image_url.trim() !== '' && (r.image_url.startsWith('http') || r.image_url.startsWith('data:') || r.image_url.startsWith('file:')))
+            })));
+          }
+
+          // Transform Supabase data to match local Receipt type
+          return data.map((receipt: any) => ({
+            id: receipt.id,
+            merchant: receipt.merchant || '',
+            total: receipt.total || 0,
+            tax: receipt.tax || 0,
+            subtotal: receipt.subtotal || (receipt.total || 0) - (receipt.tax || 0),
+            category: receipt.category || '',
+            receiptDate: receipt.receipt_date || new Date().toISOString(),
+            dateScanned: receipt.created_at || new Date().toISOString(),
+            items: receipt.items || [],
+            imageUri: receipt.image_url || '',
+            notes: receipt.notes || '',
+            paymentMethod: receipt.payment_method || '',
+            userId: receipt.user_id,
+            createdAt: receipt.created_at,
+            updatedAt: receipt.updated_at,
+          }));
+        } catch (networkError: any) {
+          console.error('Network error loading receipts:', networkError);
+          
+          // Handle network errors that don't come from Supabase
+          if (networkError.message && networkError.message.includes('Network connection failed')) {
+            throw networkError;
+          }
+          
+          if (networkError.name === 'TypeError' && networkError.message.includes('fetch')) {
+            throw new Error('Unable to connect to the database. Please check your internet connection.');
+          }
+          
+          throw new Error(`Connection error: ${networkError.message || 'Unable to load receipts'}`);
         }
-
-        console.log('Loaded receipts from Supabase:', data?.length || 0, 'receipts');
-        if (data && data.length > 0) {
-          console.log('Sample receipt image URLs:', data.slice(0, 3).map(r => ({ 
-            id: r.id, 
-            image_url: r.image_url,
-            image_url_valid: !!(r.image_url && r.image_url.trim() !== '' && (r.image_url.startsWith('http') || r.image_url.startsWith('data:') || r.image_url.startsWith('file:')))
-          })));
-        }
-
-        // Transform Supabase data to match local Receipt type
-        return data.map(receipt => ({
-          id: receipt.id,
-          merchant: receipt.merchant || '',
-          total: receipt.total || 0,
-          tax: receipt.tax || 0,
-          subtotal: receipt.subtotal || (receipt.total || 0) - (receipt.tax || 0),
-          category: receipt.category || '',
-          receiptDate: receipt.receipt_date || new Date().toISOString(),
-          dateScanned: receipt.created_at || new Date().toISOString(),
-          items: receipt.items || [],
-          imageUri: receipt.image_url || '',
-          notes: receipt.notes || '',
-          paymentMethod: receipt.payment_method || '',
-          userId: receipt.user_id,
-          createdAt: receipt.created_at,
-          updatedAt: receipt.updated_at,
-        }));
       } else {
         console.log('Loading receipts from AsyncStorage');
         const stored = await AsyncStorage.getItem(RECEIPTS_KEY);
@@ -101,47 +137,83 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
     queryFn: async () => {
       if (user) {
         console.log('Loading categories from Supabase for user:', user.id);
-        const { data, error } = await supabase
-          .from('categories')
-          .select('*')
-          .eq('user_id', user.id);
+        try {
+          const { data, error } = await supabase
+            .from('categories')
+            .select('*')
+            .eq('user_id', user.id);
 
-        if (error) {
-          console.error('Error loading categories from Supabase:', error);
-          throw error;
-        }
+          if (error) {
+            console.error('Error loading categories from Supabase:', {
+              message: error.message,
+              details: error.details,
+              hint: error.hint,
+              code: error.code
+            });
+            
+            // Check for common connection issues
+            if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('fetch')) {
+              throw new Error('Network connection failed. Please check your internet connection and try again.');
+            }
+            
+            // Check for authentication issues
+            if (error.code === '401' || error.message.includes('JWT') || error.message.includes('unauthorized')) {
+              throw new Error('Authentication failed. Please sign in again.');
+            }
+            
+            // Check for table/database issues
+            if (error.code === '42P01' || error.message.includes('does not exist')) {
+              throw new Error('Database table not found. Please contact support.');
+            }
+            
+            throw new Error(`Failed to load categories: ${error.message}`);
+          }
 
-        if (data.length === 0) {
-          // Initialize with default categories for new user
-          console.log('No categories found, initializing with defaults');
-          try {
-            const defaultCategoriesWithUserId = DEFAULT_CATEGORIES.map(cat => ({
-              name: cat.name,
-              color: cat.color,
-              icon: cat.icon,
-              user_id: user.id,
-            }));
+          if (data.length === 0) {
+            // Initialize with default categories for new user
+            console.log('No categories found, initializing with defaults');
+            try {
+              const defaultCategoriesWithUserId = DEFAULT_CATEGORIES.map(cat => ({
+                name: cat.name,
+                color: cat.color,
+                icon: cat.icon,
+                user_id: user.id,
+              }));
 
-            const { data: insertedData, error: insertError } = await supabase
-              .from('categories')
-              .insert(defaultCategoriesWithUserId)
-              .select();
+              const { data: insertedData, error: insertError } = await supabase
+                .from('categories')
+                .insert(defaultCategoriesWithUserId)
+                .select();
 
-            if (insertError) {
-              console.error('Error inserting default categories:', insertError);
-              // Return default categories even if insert fails
+              if (insertError) {
+                console.error('Error inserting default categories:', insertError);
+                // Return default categories even if insert fails
+                return DEFAULT_CATEGORIES;
+              }
+
+              console.log('Default categories inserted successfully');
+              return insertedData || DEFAULT_CATEGORIES;
+            } catch (error) {
+              console.error('Failed to initialize default categories:', error);
               return DEFAULT_CATEGORIES;
             }
-
-            console.log('Default categories inserted successfully');
-            return insertedData || DEFAULT_CATEGORIES;
-          } catch (error) {
-            console.error('Failed to initialize default categories:', error);
-            return DEFAULT_CATEGORIES;
           }
-        }
 
-        return data;
+          return data;
+        } catch (networkError: any) {
+          console.error('Network error loading categories:', networkError);
+          
+          // Handle network errors that don't come from Supabase
+          if (networkError.message && networkError.message.includes('Network connection failed')) {
+            throw networkError;
+          }
+          
+          if (networkError.name === 'TypeError' && networkError.message.includes('fetch')) {
+            throw new Error('Unable to connect to the database. Please check your internet connection.');
+          }
+          
+          throw new Error(`Connection error: ${networkError.message || 'Unable to load categories'}`);
+        }
       } else {
         console.log('Loading categories from AsyncStorage');
         const stored = await AsyncStorage.getItem(CATEGORIES_KEY);
@@ -312,8 +384,13 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
           .single();
 
         if (error) {
-          console.error('Error updating receipt in Supabase:', error);
-          throw error;
+          console.error('Error updating receipt in Supabase:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
+          throw new Error(`Failed to update receipt: ${error.message}`);
         }
 
         return data;
@@ -349,8 +426,13 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
           .eq('user_id', user.id);
 
         if (error) {
-          console.error('Error deleting receipt from Supabase:', error);
-          throw error;
+          console.error('Error deleting receipt from Supabase:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
+          throw new Error(`Failed to delete receipt: ${error.message}`);
         }
 
         return receiptId;
@@ -389,8 +471,13 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
           .single();
 
         if (error) {
-          console.error('Error adding category to Supabase:', error);
-          throw error;
+          console.error('Error adding category to Supabase:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
+          throw new Error(`Failed to add category: ${error.message}`);
         }
 
         return data;
