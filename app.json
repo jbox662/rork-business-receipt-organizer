@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Business Receipt Organizer",
-    "slug": "business-receipt-organizer",
+    "name": "Receipty",
+    "slug": "receipty",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.rork.business-receipt-organizer",
+      "bundleIdentifier": "app.rork.receiptly",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos",
         "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera",
@@ -27,7 +27,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "app.rork.business-receipt-organizer",
+      "package": "app.rork.receiptly",
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
