@@ -1,8 +1,8 @@
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, useMemo } from 'react';
-import { Receipt, Category } from '@/types/receipt';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { Receipt, Category, Budget, BudgetAlert } from '@/types/receipt';
 import { DEFAULT_CATEGORIES } from '@/constants/categories';
 import { supabase } from '@/constants/supabase';
 import { useAuth } from '@/hooks/auth-store';
@@ -525,4 +525,153 @@ export async function clearAllLocalData() {
     console.error('Error clearing local storage:', error);
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
+}
+
+// Budget Management Hook
+export function useBudgets() {
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [alerts, setAlerts] = useState<BudgetAlert[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { receipts } = useReceipts();
+
+  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+
+  // Load budgets from AsyncStorage
+  const loadBudgets = useCallback(async () => {
+    try {
+      const stored = await AsyncStorage.getItem('budgets');
+      if (stored) {
+        setBudgets(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Error loading budgets:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Save budgets to AsyncStorage
+  const saveBudgets = useCallback(async (newBudgets: Budget[]) => {
+    try {
+      await AsyncStorage.setItem('budgets', JSON.stringify(newBudgets));
+      setBudgets(newBudgets);
+    } catch (error) {
+      console.error('Error saving budgets:', error);
+    }
+  }, []);
+
+  // Calculate current spending for each budget
+  const calculateCurrentSpending = useCallback(() => {
+    const updatedBudgets = budgets.map(budget => {
+      const categoryReceipts = receipts.filter((receipt: Receipt) => {
+        const receiptMonth = new Date(receipt.receiptDate).toISOString().slice(0, 7);
+        return receipt.category === budget.category && receiptMonth === budget.month;
+      });
+      
+      const currentSpent = categoryReceipts.reduce((sum: number, receipt: Receipt) => sum + receipt.total, 0);
+      
+      return {
+        ...budget,
+        currentSpent
+      };
+    });
+    
+    setBudgets(updatedBudgets);
+    
+    // Generate alerts
+    const newAlerts: BudgetAlert[] = [];
+    updatedBudgets.forEach(budget => {
+      const percentage = (budget.currentSpent / budget.monthlyLimit) * 100;
+      
+      if (percentage >= 100) {
+        newAlerts.push({
+          id: `${budget.id}-exceeded`,
+          budgetId: budget.id,
+          category: budget.category,
+          type: 'exceeded',
+          threshold: 100,
+          currentAmount: budget.currentSpent,
+          message: `You've exceeded your ${budget.category} budget by ${(budget.currentSpent - budget.monthlyLimit).toFixed(2)}`,
+          createdAt: new Date().toISOString()
+        });
+      } else if (percentage >= 80) {
+        newAlerts.push({
+          id: `${budget.id}-warning`,
+          budgetId: budget.id,
+          category: budget.category,
+          type: 'warning',
+          threshold: 80,
+          currentAmount: budget.currentSpent,
+          message: `You've used ${percentage.toFixed(0)}% of your ${budget.category} budget`,
+          createdAt: new Date().toISOString()
+        });
+      }
+    });
+    
+    setAlerts(newAlerts);
+  }, [budgets, receipts]);
+
+  // Add or update budget
+  const setBudget = useCallback(async (category: string, monthlyLimit: number, month: string = currentMonth) => {
+    const existingBudgetIndex = budgets.findIndex(b => b.category === category && b.month === month);
+    
+    if (existingBudgetIndex >= 0) {
+      const updatedBudgets = [...budgets];
+      updatedBudgets[existingBudgetIndex] = {
+        ...updatedBudgets[existingBudgetIndex],
+        monthlyLimit,
+        updatedAt: new Date().toISOString()
+      };
+      await saveBudgets(updatedBudgets);
+    } else {
+      const newBudget: Budget = {
+        id: `budget-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        category,
+        monthlyLimit,
+        currentSpent: 0,
+        month,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      await saveBudgets([...budgets, newBudget]);
+    }
+  }, [budgets, saveBudgets, currentMonth]);
+
+  // Remove budget
+  const removeBudget = useCallback(async (budgetId: string) => {
+    const updatedBudgets = budgets.filter(b => b.id !== budgetId);
+    await saveBudgets(updatedBudgets);
+  }, [budgets, saveBudgets]);
+
+  // Get budget for category and month
+  const getBudget = useCallback((category: string, month: string = currentMonth) => {
+    return budgets.find(b => b.category === category && b.month === month);
+  }, [budgets, currentMonth]);
+
+  // Get current month budgets
+  const currentMonthBudgets = useMemo(() => {
+    return budgets.filter(b => b.month === currentMonth);
+  }, [budgets, currentMonth]);
+
+  useEffect(() => {
+    loadBudgets();
+  }, [loadBudgets]);
+
+  useEffect(() => {
+    if (budgets.length > 0 && receipts.length > 0) {
+      calculateCurrentSpending();
+    }
+  }, [receipts, calculateCurrentSpending]);
+
+  return {
+    budgets: currentMonthBudgets,
+    allBudgets: budgets,
+    alerts,
+    isLoading,
+    setBudget,
+    removeBudget,
+    getBudget,
+    currentMonth
+  };
 }

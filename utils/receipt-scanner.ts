@@ -1,4 +1,28 @@
 import { ReceiptScanResult } from '@/types/receipt';
+import { DEFAULT_CATEGORIES } from '@/constants/categories';
+
+// Auto-categorization rules based on merchant names
+const MERCHANT_CATEGORY_RULES = {
+  'Office Supplies': ['staples', 'office depot', 'best buy', 'amazon', 'costco', 'walmart', 'target'],
+  'Travel': ['uber', 'lyft', 'hotel', 'airbnb', 'airline', 'expedia', 'booking', 'hertz', 'enterprise', 'avis'],
+  'Meals & Entertainment': ['restaurant', 'cafe', 'starbucks', 'mcdonalds', 'subway', 'pizza', 'bar', 'pub', 'diner', 'food'],
+  'Transportation': ['gas', 'shell', 'exxon', 'chevron', 'bp', 'mobil', 'parking', 'metro', 'taxi'],
+  'Equipment': ['apple', 'microsoft', 'dell', 'hp', 'lenovo', 'home depot', 'lowes', 'tools'],
+  'Marketing': ['google', 'facebook', 'instagram', 'linkedin', 'twitter', 'adobe', 'canva'],
+  'Utilities': ['electric', 'water', 'internet', 'phone', 'verizon', 'att', 'comcast', 'spectrum']
+};
+
+function suggestCategory(merchant: string): string {
+  const merchantLower = merchant.toLowerCase();
+  
+  for (const [category, keywords] of Object.entries(MERCHANT_CATEGORY_RULES)) {
+    if (keywords.some(keyword => merchantLower.includes(keyword))) {
+      return category;
+    }
+  }
+  
+  return 'Other';
+}
 
 const SYSTEM_PROMPT = `You are a receipt scanner AI. Extract information from receipt images and return structured data.
 Analyze the receipt and extract:
@@ -111,7 +135,7 @@ export async function scanReceipt(imageBase64: string): Promise<ReceiptScanResul
       subtotal: parseFloat(result.subtotal) || 0,
       items: result.items || [],
       paymentMethod: result.paymentMethod,
-      suggestedCategory: result.suggestedCategory || 'Other',
+      suggestedCategory: result.suggestedCategory || suggestCategory(result.merchant || 'Unknown'),
     };
   } catch (error) {
     console.error('Error scanning receipt:', error);

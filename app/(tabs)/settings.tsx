@@ -8,25 +8,32 @@ import {
   Alert,
   Linking,
   Platform,
+  TextInput,
+  Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Receipt } from '@/types/receipt';
 import { useAuth } from '@/hooks/auth-store';
-import { useReceipts, clearAllLocalData } from '@/hooks/receipt-store-supabase';
-import { LogOut, User, Mail, Shield, HelpCircle, Info, ChevronRight, Trash2, Download, RefreshCw, Database, CheckCircle } from 'lucide-react-native';
+import { useReceipts, clearAllLocalData, useBudgets } from '@/hooks/receipt-store-supabase';
+import { LogOut, User, Mail, Shield, HelpCircle, Info, ChevronRight, Trash2, Download, RefreshCw, Database, CheckCircle, DollarSign, Plus, X } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
 import { Colors } from '@/constants/design-system';
 import { router } from 'expo-router';
 import { checkStorageSetup, testImageUploadDownload, debugStorageConfiguration } from '@/utils/storage-setup';
+import { DEFAULT_CATEGORIES } from '@/constants/categories';
 
 export default function SettingsScreen() {
   const { user, signOut, resetPassword } = useAuth();
   const { receipts, categories, deleteReceipt } = useReceipts();
+  const { budgets, setBudget, removeBudget } = useBudgets();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [isCheckingStorage, setIsCheckingStorage] = useState(false);
   const [isTestingStorage, setIsTestingStorage] = useState(false);
   const [isDebuggingStorage, setIsDebuggingStorage] = useState(false);
+  const [showBudgetModal, setShowBudgetModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [budgetAmount, setBudgetAmount] = useState('');
   const insets = useSafeAreaInsets();
 
   const handleSignOut = async () => {
@@ -502,6 +509,63 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Budget Management</Text>
+          
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={() => setShowBudgetModal(true)}
+          >
+            <View style={styles.settingIcon}>
+              <Plus size={20} color="#6B7280" />
+            </View>
+            <View style={styles.settingContent}>
+              <Text style={styles.settingTitle}>Add Budget</Text>
+              <Text style={styles.settingSubtitle}>Set monthly spending limits</Text>
+            </View>
+            <ChevronRight size={16} color="#9CA3AF" />
+          </TouchableOpacity>
+
+          {budgets.map((budget) => {
+            const percentage = (budget.currentSpent / budget.monthlyLimit) * 100;
+            const isOverBudget = budget.currentSpent > budget.monthlyLimit;
+            
+            return (
+              <View key={budget.id} style={styles.budgetItem}>
+                <View style={styles.budgetInfo}>
+                  <Text style={styles.budgetCategory}>{budget.category}</Text>
+                  <Text style={[
+                    styles.budgetAmount,
+                    isOverBudget && { color: '#DC2626' }
+                  ]}>
+                    ${budget.currentSpent.toFixed(0)} / ${budget.monthlyLimit.toFixed(0)}
+                  </Text>
+                </View>
+                <View style={styles.budgetProgressContainer}>
+                  <View style={styles.budgetProgressBar}>
+                    <View 
+                      style={[
+                        styles.budgetProgressFill,
+                        {
+                          width: `${Math.min(percentage, 100)}%`,
+                          backgroundColor: isOverBudget ? '#DC2626' : 
+                            percentage > 80 ? '#F59E0B' : '#10B981'
+                        }
+                      ]}
+                    />
+                  </View>
+                  <TouchableOpacity 
+                    onPress={() => removeBudget(budget.id)}
+                    style={styles.deleteBudgetButton}
+                  >
+                    <Trash2 size={16} color="#DC2626" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Data Management</Text>
           {dataItems.map((item) => (
             <TouchableOpacity
@@ -623,6 +687,88 @@ export default function SettingsScreen() {
           </Text>
         </View>
       </ScrollView>
+
+      {/* Budget Modal */}
+      <Modal
+        visible={showBudgetModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowBudgetModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add Budget</Text>
+              <TouchableOpacity 
+                onPress={() => setShowBudgetModal(false)}
+                style={styles.modalCloseButton}
+              >
+                <X size={24} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.modalBody}>
+              <Text style={styles.inputLabel}>Category</Text>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                style={styles.categorySelector}
+              >
+                {DEFAULT_CATEGORIES.map((category) => (
+                  <TouchableOpacity
+                    key={category.id}
+                    style={[
+                      styles.categoryOption,
+                      selectedCategory === category.name && styles.categoryOptionSelected
+                    ]}
+                    onPress={() => setSelectedCategory(category.name)}
+                  >
+                    <Text style={[
+                      styles.categoryOptionText,
+                      selectedCategory === category.name && styles.categoryOptionTextSelected
+                    ]}>
+                      {category.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              
+              <Text style={styles.inputLabel}>Monthly Limit</Text>
+              <TextInput
+                style={styles.budgetInput}
+                value={budgetAmount}
+                onChangeText={setBudgetAmount}
+                placeholder="Enter amount"
+                keyboardType="numeric"
+                placeholderTextColor="#9CA3AF"
+              />
+              
+              <TouchableOpacity
+                style={[
+                  styles.addBudgetButton,
+                  (!selectedCategory || !budgetAmount) && styles.addBudgetButtonDisabled
+                ]}
+                onPress={async () => {
+                  if (selectedCategory && budgetAmount) {
+                    await setBudget(selectedCategory, parseFloat(budgetAmount));
+                    setSelectedCategory('');
+                    setBudgetAmount('');
+                    setShowBudgetModal(false);
+                  }
+                }}
+                disabled={!selectedCategory || !budgetAmount}
+              >
+                <Text style={[
+                  styles.addBudgetButtonText,
+                  (!selectedCategory || !budgetAmount) && styles.addBudgetButtonTextDisabled
+                ]}>
+                  Add Budget
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -783,5 +929,136 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFBEB',
     borderTopWidth: 1,
     borderTopColor: '#FEF3C7',
+  },
+  budgetItem: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  budgetInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  budgetCategory: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1F2937',
+  },
+  budgetAmount: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#6B7280',
+  },
+  budgetProgressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  budgetProgressBar: {
+    flex: 1,
+    height: 6,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  budgetProgressFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  deleteBudgetButton: {
+    padding: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  modalCloseButton: {
+    padding: 4,
+  },
+  modalBody: {
+    padding: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  categorySelector: {
+    marginBottom: 20,
+  },
+  categoryOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  categoryOptionSelected: {
+    backgroundColor: '#1E40AF',
+  },
+  categoryOptionText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#374151',
+  },
+  categoryOptionTextSelected: {
+    color: 'white',
+  },
+  budgetInput: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: '#1F2937',
+    marginBottom: 20,
+  },
+  addBudgetButton: {
+    backgroundColor: '#1E40AF',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+  },
+  addBudgetButtonDisabled: {
+    backgroundColor: '#D1D5DB',
+  },
+  addBudgetButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'white',
+  },
+  addBudgetButtonTextDisabled: {
+    color: '#9CA3AF',
   },
 });

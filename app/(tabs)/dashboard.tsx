@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { TrendingUp, Receipt, DollarSign, Calendar, BarChart3, Camera, FileText, Target, ArrowUpRight, ArrowDownRight } from 'lucide-react-native';
-import { useReceipts } from '@/hooks/receipt-store-supabase';
+import { useReceipts, useBudgets } from '@/hooks/receipt-store-supabase';
 import { ReceiptCard } from '@/components/ReceiptCard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Shadows, BorderRadius, Spacing } from '@/constants/design-system';
@@ -13,6 +13,7 @@ import type { Receipt as ReceiptType } from '@/types/receipt';
 
 export default function DashboardScreen() {
   const { receipts, isLoading, categories } = useReceipts();
+  const { budgets, alerts } = useBudgets();
   const insets = useSafeAreaInsets();
 
   // Sort receipts by date (newest first) for dashboard
@@ -164,6 +165,29 @@ export default function DashboardScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Budget Alerts */}
+      {alerts.length > 0 && (
+        <View style={styles.alertsContainer}>
+          {alerts.slice(0, 2).map((alert) => (
+            <View 
+              key={alert.id} 
+              style={[
+                styles.alertCard,
+                { borderLeftColor: alert.type === 'exceeded' ? Colors.error : Colors.orange }
+              ]}
+            >
+              <Text style={[
+                styles.alertTitle,
+                { color: alert.type === 'exceeded' ? Colors.error : Colors.orange }
+              ]}>
+                {alert.type === 'exceeded' ? '⚠️ Budget Exceeded' : '⚡ Budget Warning'}
+              </Text>
+              <Text style={styles.alertMessage}>{alert.message}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
       {/* Enhanced Stats Grid */}
       <View style={styles.statsGrid}>
         <View style={styles.statCard}>
@@ -210,6 +234,54 @@ export default function DashboardScreen() {
           <Text style={styles.statSubtext}>average amount</Text>
         </View>
       </View>
+
+      {/* Budget Progress */}
+      {budgets.length > 0 && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Budget Progress</Text>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/settings')}>
+              <Text style={styles.seeAll}>Manage</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.budgetCard}>
+            {budgets.slice(0, 3).map((budget) => {
+              const percentage = Math.min((budget.currentSpent / budget.monthlyLimit) * 100, 100);
+              const isOverBudget = budget.currentSpent > budget.monthlyLimit;
+              
+              return (
+                <View key={budget.id} style={styles.budgetItem}>
+                  <View style={styles.budgetHeader}>
+                    <Text style={styles.budgetCategory}>{budget.category}</Text>
+                    <Text style={[
+                      styles.budgetAmount,
+                      isOverBudget && { color: Colors.error }
+                    ]}>
+                      ${budget.currentSpent.toFixed(0)} / ${budget.monthlyLimit.toFixed(0)}
+                    </Text>
+                  </View>
+                  <View style={styles.budgetProgressBar}>
+                    <View 
+                      style={[
+                        styles.budgetProgressFill,
+                        {
+                          width: `${percentage}%`,
+                          backgroundColor: isOverBudget ? Colors.error : 
+                            percentage > 80 ? Colors.orange : Colors.secondary
+                        }
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.budgetPercentage}>
+                    {percentage.toFixed(0)}% used
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      )}
 
       {/* Top Categories */}
       <View style={styles.section}>
@@ -541,6 +613,71 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.primaryLight,
     lineHeight: 18,
+    fontWeight: '500',
+  },
+  alertsContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+    gap: 12,
+  },
+  alertCard: {
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    borderLeftWidth: 4,
+    ...Shadows.sm,
+  },
+  alertTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  alertMessage: {
+    fontSize: 13,
+    color: Colors.gray600,
+    lineHeight: 18,
+  },
+  budgetCard: {
+    backgroundColor: Colors.white,
+    marginHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    ...Shadows.md,
+    borderWidth: 1,
+    borderColor: Colors.gray100,
+    gap: 16,
+  },
+  budgetItem: {
+    gap: 8,
+  },
+  budgetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  budgetCategory: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.gray800,
+  },
+  budgetAmount: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.gray600,
+  },
+  budgetProgressBar: {
+    height: 6,
+    backgroundColor: Colors.gray200,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  budgetProgressFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  budgetPercentage: {
+    fontSize: 11,
+    color: Colors.gray500,
     fontWeight: '500',
   },
 });

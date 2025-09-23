@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert, useWindowDimensions } from 'react-native';
-import { TrendingUp, PieChart, Calendar, DollarSign, Store, FileText, Download } from 'lucide-react-native';
-import { useCategoryStats, useReceipts } from '@/hooks/receipt-store-supabase';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert, useWindowDimensions, Animated } from 'react-native';
+import { TrendingUp, PieChart, Calendar, DollarSign, Store, FileText, Download, BarChart3 } from 'lucide-react-native';
+import { useCategoryStats, useReceipts, useBudgets } from '@/hooks/receipt-store-supabase';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Shadows, BorderRadius, Spacing, CommonStyles, Typography } from '@/constants/design-system';
 import type { Receipt as ReceiptType } from '@/types/receipt';
@@ -9,6 +9,7 @@ import type { Receipt as ReceiptType } from '@/types/receipt';
 export default function AnalyticsScreen() {
   const { receipts, totals, isLoading } = useReceipts();
   const categoryStats = useCategoryStats();
+  const { budgets } = useBudgets();
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
   const [selectedTimeframe, setSelectedTimeframe] = React.useState<'month' | 'quarter' | 'year'>('month');
@@ -226,36 +227,116 @@ export default function AnalyticsScreen() {
         )}
       </View>
 
+      {/* Enhanced Category Visualization */}
       <View style={[styles.section, { marginHorizontal: cardMargin, padding: cardPadding }]}>
         <View style={styles.sectionHeader}>
           <PieChart size={isSmallScreen ? 18 : 20} color={Colors.primary} />
-          <Text style={styles.sectionTitle}>Top Categories</Text>
-          <Text style={styles.viewAllButton}>View All</Text>
+          <Text style={styles.sectionTitle}>Category Breakdown</Text>
         </View>
         
-        {categoryStats.filter((cat: any) => cat.total > 0).map((category: any) => (
-          <View key={category.id} style={styles.categoryRow}>
-            <View style={styles.categoryInfo}>
-              <View style={[styles.categoryDot, { backgroundColor: category.color }]} />
-              <Text style={[styles.categoryName, isSmallScreen && { fontSize: Typography.xs }]} numberOfLines={1}>
-                {category.name}
-              </Text>
-            </View>
-            <View style={styles.categoryStats}>
-              <Text style={[styles.categoryAmount, isSmallScreen && { fontSize: Typography.xs }]}>
-                ${category.total.toFixed(2)}
-              </Text>
-              <Text style={[styles.categoryPercentage, isSmallScreen && { fontSize: 10 }]}>
-                {category.percentage.toFixed(1)}%
-              </Text>
-            </View>
-          </View>
-        ))}
+        {/* Visual Chart */}
+        <View style={styles.chartContainer}>
+          {categoryStats.filter((cat: any) => cat.total > 0).slice(0, 5).map((category: any, index: number) => {
+            const maxTotal = categoryStats[0]?.total || 1;
+            const barWidth = (category.total / maxTotal) * 100;
+            
+            return (
+              <View key={category.id} style={styles.chartBar}>
+                <View style={styles.chartBarInfo}>
+                  <View style={styles.chartBarLabel}>
+                    <View style={[styles.chartBarDot, { backgroundColor: category.color }]} />
+                    <Text style={styles.chartBarName} numberOfLines={1}>{category.name}</Text>
+                  </View>
+                  <Text style={styles.chartBarAmount}>${category.total.toFixed(0)}</Text>
+                </View>
+                <View style={styles.chartBarTrack}>
+                  <Animated.View 
+                    style={[
+                      styles.chartBarFill,
+                      {
+                        width: `${barWidth}%`,
+                        backgroundColor: category.color
+                      }
+                    ]}
+                  />
+                </View>
+                <Text style={styles.chartBarPercentage}>{category.percentage.toFixed(1)}%</Text>
+              </View>
+            );
+          })}
+        </View>
         
         {categoryStats.filter((cat: any) => cat.total > 0).length === 0 && (
           <Text style={styles.noData}>No expense data yet</Text>
         )}
       </View>
+
+      {/* Budget vs Actual */}
+      {budgets.length > 0 && (
+        <View style={[styles.section, { marginHorizontal: cardMargin, padding: cardPadding }]}>
+          <View style={styles.sectionHeader}>
+            <BarChart3 size={isSmallScreen ? 18 : 20} color={Colors.orange} />
+            <Text style={styles.sectionTitle}>Budget vs Actual</Text>
+          </View>
+          
+          {budgets.map((budget) => {
+            const percentage = (budget.currentSpent / budget.monthlyLimit) * 100;
+            const isOverBudget = budget.currentSpent > budget.monthlyLimit;
+            
+            return (
+              <View key={budget.id} style={styles.budgetComparisonItem}>
+                <View style={styles.budgetComparisonHeader}>
+                  <Text style={styles.budgetComparisonCategory}>{budget.category}</Text>
+                  <View style={styles.budgetComparisonAmounts}>
+                    <Text style={[
+                      styles.budgetComparisonActual,
+                      isOverBudget && { color: Colors.error }
+                    ]}>
+                      ${budget.currentSpent.toFixed(0)}
+                    </Text>
+                    <Text style={styles.budgetComparisonBudget}>/ ${budget.monthlyLimit.toFixed(0)}</Text>
+                  </View>
+                </View>
+                <View style={styles.budgetComparisonBar}>
+                  <View 
+                    style={[
+                      styles.budgetComparisonFill,
+                      {
+                        width: `${Math.min(percentage, 100)}%`,
+                        backgroundColor: isOverBudget ? Colors.error : 
+                          percentage > 80 ? Colors.orange : Colors.secondary
+                      }
+                    ]}
+                  />
+                  {isOverBudget && (
+                    <View 
+                      style={[
+                        styles.budgetComparisonOverage,
+                        {
+                          width: `${Math.min((percentage - 100), 50)}%`,
+                        }
+                      ]}
+                    />
+                  )}
+                </View>
+                <View style={styles.budgetComparisonFooter}>
+                  <Text style={[
+                    styles.budgetComparisonPercentage,
+                    isOverBudget && { color: Colors.error }
+                  ]}>
+                    {percentage.toFixed(0)}% used
+                  </Text>
+                  {isOverBudget && (
+                    <Text style={styles.budgetComparisonOverageText}>
+                      ${(budget.currentSpent - budget.monthlyLimit).toFixed(0)} over
+                    </Text>
+                  )}
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      )}
 
       <View style={[styles.section, { marginHorizontal: cardMargin, padding: cardPadding }]}>
         <View style={[styles.sectionHeader, isSmallScreen && { flexWrap: 'wrap' }]}>
@@ -713,5 +794,121 @@ const styles = StyleSheet.create({
     color: Colors.gray900,
     width: 50,
     textAlign: 'right',
+  },
+  chartContainer: {
+    marginBottom: Spacing.lg,
+  },
+  chartBar: {
+    marginBottom: Spacing.lg,
+  },
+  chartBarInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
+  },
+  chartBarLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  chartBarDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: Spacing.sm,
+  },
+  chartBarName: {
+    fontSize: Typography.sm,
+    fontWeight: Typography.semibold,
+    color: Colors.gray800,
+    flex: 1,
+  },
+  chartBarAmount: {
+    fontSize: Typography.sm,
+    fontWeight: Typography.bold,
+    color: Colors.gray900,
+  },
+  chartBarTrack: {
+    height: 8,
+    backgroundColor: Colors.gray200,
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: Spacing.xs,
+  },
+  chartBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  chartBarPercentage: {
+    fontSize: Typography.xs,
+    color: Colors.gray500,
+    textAlign: 'right',
+  },
+  budgetComparisonItem: {
+    marginBottom: Spacing.xl,
+    padding: Spacing.md,
+    backgroundColor: Colors.gray50,
+    borderRadius: BorderRadius.lg,
+  },
+  budgetComparisonHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  budgetComparisonCategory: {
+    fontSize: Typography.base,
+    fontWeight: Typography.semibold,
+    color: Colors.gray800,
+  },
+  budgetComparisonAmounts: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  budgetComparisonActual: {
+    fontSize: Typography.base,
+    fontWeight: Typography.bold,
+    color: Colors.gray900,
+  },
+  budgetComparisonBudget: {
+    fontSize: Typography.sm,
+    color: Colors.gray600,
+    marginLeft: 2,
+  },
+  budgetComparisonBar: {
+    height: 12,
+    backgroundColor: Colors.gray200,
+    borderRadius: 6,
+    overflow: 'hidden',
+    marginBottom: Spacing.sm,
+    position: 'relative',
+  },
+  budgetComparisonFill: {
+    height: '100%',
+    borderRadius: 6,
+  },
+  budgetComparisonOverage: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    height: '100%',
+    backgroundColor: Colors.error,
+    opacity: 0.7,
+  },
+  budgetComparisonFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  budgetComparisonPercentage: {
+    fontSize: Typography.xs,
+    fontWeight: Typography.medium,
+    color: Colors.gray600,
+  },
+  budgetComparisonOverageText: {
+    fontSize: Typography.xs,
+    fontWeight: Typography.semibold,
+    color: Colors.error,
   },
 });
