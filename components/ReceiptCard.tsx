@@ -241,6 +241,8 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     zIndex: 2,
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.xl,
   },
   card: {
     flexDirection: 'row',
