@@ -8,6 +8,7 @@ import {
   Alert,
   Share,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -283,108 +284,126 @@ export default function ReportsScreen() {
     }
   };
 
-  const renderPeriodSelector = () => (
-    <Card style={styles.card}>
-      <Text style={styles.cardTitle}>Report Period</Text>
-      <View style={styles.periodContainer}>
-        {(['week', 'month', 'quarter', 'year'] as ReportPeriod[]).map((period) => {
-          return (
-            <TouchableOpacity
-              key={period}
-              style={[
-                styles.periodButton,
-                selectedPeriod === period && styles.periodButtonActive,
-              ]}
-              onPress={() => {
-                if (period.trim() && period.length <= 20) {
-                  setSelectedPeriod(period);
-                }
-              }}
-            >
-              <Text
-                style={[
-                  styles.periodButtonText,
-                  selectedPeriod === period && styles.periodButtonTextActive,
-                ]}
-              >
-                {period.charAt(0).toUpperCase() + period.slice(1)}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </Card>
-  );
-
-  const renderReportTypeSelector = () => (
-    <Card style={styles.card}>
-      <Text style={styles.cardTitle}>Report Type</Text>
-      <View style={styles.reportTypeContainer}>
-        {([
-          { key: 'summary', label: 'Summary', icon: BarChart3 },
-          { key: 'category', label: 'Category', icon: PieChart },
-          { key: 'merchant', label: 'Merchant', icon: ShoppingBag },
-          { key: 'trends', label: 'Trends', icon: TrendingUp },
-          { key: 'detailed', label: 'Detailed', icon: FileText },
-        ] as { key: ReportType; label: string; icon: any }[]).map((type) => {
-          const IconComponent = type.icon;
-          return (
-            <TouchableOpacity
-              key={type.key}
-              style={[
-                styles.reportTypeButton,
-                selectedReportType === type.key && styles.reportTypeButtonActive,
-              ]}
-              onPress={() => setSelectedReportType(type.key)}
-            >
-              <IconComponent
-                size={20}
-                color={selectedReportType === type.key ? '#1E40AF' : '#6B7280'}
-              />
-              <Text
-                style={[
-                  styles.reportTypeButtonText,
-                  selectedReportType === type.key && styles.reportTypeButtonTextActive,
-                ]}
-              >
-                {type.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </Card>
-  );
-
-  const renderSummaryReport = () => (
-    <>
+  const renderPeriodSelector = () => {
+    const screenWidth = Dimensions.get('window').width;
+    const isSmallScreen = screenWidth < 400;
+    
+    return (
       <Card style={styles.card}>
-        <Text style={styles.cardTitle}>Summary</Text>
-        <View style={styles.summaryGrid}>
-          <View style={styles.summaryItem}>
-            <DollarSign size={24} color="#10B981" />
-            <Text style={styles.summaryValue}>${reportData.totalSpent.toFixed(2)}</Text>
-            <Text style={styles.summaryLabel}>Total Spent</Text>
-          </View>
-          <View style={styles.summaryItem}>
-            <FileText size={24} color="#3B82F6" />
-            <Text style={styles.summaryValue}>{reportData.totalReceipts}</Text>
-            <Text style={styles.summaryLabel}>Receipts</Text>
-          </View>
-          <View style={styles.summaryItem}>
-            <Target size={24} color="#8B5CF6" />
-            <Text style={styles.summaryValue}>${reportData.averagePerReceipt.toFixed(2)}</Text>
-            <Text style={styles.summaryLabel}>Average</Text>
-          </View>
-          <View style={styles.summaryItem}>
-            <ShoppingBag size={24} color="#F59E0B" />
-            <Text style={styles.summaryValue}>{reportData.topCategory}</Text>
-            <Text style={styles.summaryLabel}>Top Category</Text>
-          </View>
+        <Text style={styles.cardTitle}>Report Period</Text>
+        <View style={[styles.periodContainer, isSmallScreen && styles.periodContainerSmall]}>
+          {(['week', 'month', 'quarter', 'year'] as ReportPeriod[]).map((period) => {
+            return (
+              <TouchableOpacity
+                key={period}
+                style={[
+                  styles.periodButton,
+                  isSmallScreen && styles.periodButtonSmall,
+                  selectedPeriod === period && styles.periodButtonActive,
+                ]}
+                onPress={() => {
+                  if (period.trim() && period.length <= 20) {
+                    setSelectedPeriod(period);
+                  }
+                }}
+              >
+                <Text
+                  style={[
+                    styles.periodButtonText,
+                    isSmallScreen && styles.periodButtonTextSmall,
+                    selectedPeriod === period && styles.periodButtonTextActive,
+                  ]}
+                >
+                  {period.charAt(0).toUpperCase() + period.slice(1)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </Card>
+    );
+  };
 
+  const renderReportTypeSelector = () => {
+    const screenWidth = Dimensions.get('window').width;
+    const isSmallScreen = screenWidth < 400;
+    
+    return (
       <Card style={styles.card}>
+        <Text style={styles.cardTitle}>Report Type</Text>
+        <View style={[styles.reportTypeContainer, isSmallScreen && styles.reportTypeContainerSmall]}>
+          {([
+            { key: 'summary', label: 'Summary', icon: BarChart3 },
+            { key: 'category', label: 'Category', icon: PieChart },
+            { key: 'merchant', label: 'Merchant', icon: ShoppingBag },
+            { key: 'trends', label: 'Trends', icon: TrendingUp },
+            { key: 'detailed', label: 'Detailed', icon: FileText },
+          ] as { key: ReportType; label: string; icon: any }[]).map((type) => {
+            const IconComponent = type.icon;
+            return (
+              <TouchableOpacity
+                key={type.key}
+                style={[
+                  styles.reportTypeButton,
+                  isSmallScreen && styles.reportTypeButtonSmall,
+                  selectedReportType === type.key && styles.reportTypeButtonActive,
+                ]}
+                onPress={() => setSelectedReportType(type.key)}
+              >
+                <IconComponent
+                  size={isSmallScreen ? 16 : 20}
+                  color={selectedReportType === type.key ? '#1E40AF' : '#6B7280'}
+                />
+                <Text
+                  style={[
+                    styles.reportTypeButtonText,
+                    isSmallScreen && styles.reportTypeButtonTextSmall,
+                    selectedReportType === type.key && styles.reportTypeButtonTextActive,
+                  ]}
+                >
+                  {type.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </Card>
+    );
+  };
+
+  const renderSummaryReport = () => {
+    const screenWidth = Dimensions.get('window').width;
+    const isSmallScreen = screenWidth < 400;
+    
+    return (
+      <>
+        <Card style={styles.card}>
+          <Text style={styles.cardTitle}>Summary</Text>
+          <View style={[styles.summaryGrid, isSmallScreen && styles.summaryGridSmall]}>
+            <View style={[styles.summaryItem, isSmallScreen && styles.summaryItemSmall]}>
+              <DollarSign size={isSmallScreen ? 20 : 24} color="#10B981" />
+              <Text style={[styles.summaryValue, isSmallScreen && styles.summaryValueSmall]}>${reportData.totalSpent.toFixed(2)}</Text>
+              <Text style={[styles.summaryLabel, isSmallScreen && styles.summaryLabelSmall]}>Total Spent</Text>
+            </View>
+            <View style={[styles.summaryItem, isSmallScreen && styles.summaryItemSmall]}>
+              <FileText size={isSmallScreen ? 20 : 24} color="#3B82F6" />
+              <Text style={[styles.summaryValue, isSmallScreen && styles.summaryValueSmall]}>{reportData.totalReceipts}</Text>
+              <Text style={[styles.summaryLabel, isSmallScreen && styles.summaryLabelSmall]}>Receipts</Text>
+            </View>
+            <View style={[styles.summaryItem, isSmallScreen && styles.summaryItemSmall]}>
+              <Target size={isSmallScreen ? 20 : 24} color="#8B5CF6" />
+              <Text style={[styles.summaryValue, isSmallScreen && styles.summaryValueSmall]}>${reportData.averagePerReceipt.toFixed(2)}</Text>
+              <Text style={[styles.summaryLabel, isSmallScreen && styles.summaryLabelSmall]}>Average</Text>
+            </View>
+            <View style={[styles.summaryItem, isSmallScreen && styles.summaryItemSmall]}>
+              <ShoppingBag size={isSmallScreen ? 20 : 24} color="#F59E0B" />
+              <Text style={[styles.summaryValue, isSmallScreen && styles.summaryValueSmall]}>{reportData.topCategory}</Text>
+              <Text style={[styles.summaryLabel, isSmallScreen && styles.summaryLabelSmall]}>Top Category</Text>
+            </View>
+          </View>
+        </Card>
+
+        <Card style={styles.card}>
         <Text style={styles.cardTitle}>Top Categories</Text>
         {reportData.categoryBreakdown.slice(0, 5).map((cat, index) => (
           <View key={cat.category} style={styles.breakdownItem}>
@@ -534,10 +553,12 @@ export default function ReportsScreen() {
   };
 
   const insets = useSafeAreaInsets();
+  const screenWidth = Dimensions.get('window').width;
+  const isSmallScreen = screenWidth < 400;
 
   return (
     <ScrollView 
-      style={[styles.container, { paddingTop: insets.top }]} 
+      style={[styles.container, { paddingTop: insets.top }, isSmallScreen && styles.containerSmall]} 
       showsVerticalScrollIndicator={false}
     >
       {renderPeriodSelector()}
@@ -563,6 +584,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.gray50,
     padding: Spacing.lg,
   },
+  containerSmall: {
+    padding: Spacing.md,
+  },
   card: {
     marginBottom: Spacing.lg,
   },
@@ -575,6 +599,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: Spacing.sm,
   },
+  periodContainerSmall: {
+    gap: Spacing.xs,
+  },
   periodButton: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
@@ -583,6 +610,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.gray200,
     ...Shadows.sm,
+    minWidth: 70,
+  },
+  periodButtonSmall: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    minWidth: 60,
   },
   periodButtonActive: {
     backgroundColor: Colors.primary,
@@ -592,6 +625,10 @@ const styles = StyleSheet.create({
     fontSize: Typography.sm,
     fontWeight: Typography.medium,
     color: Colors.gray600,
+    textAlign: 'center',
+  },
+  periodButtonTextSmall: {
+    fontSize: Typography.xs,
   },
   periodButtonTextActive: {
     color: Colors.white,
@@ -600,6 +637,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.sm,
+  },
+  reportTypeContainerSmall: {
+    gap: Spacing.xs,
   },
   reportTypeButton: {
     flexDirection: 'row',
@@ -613,6 +653,11 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     ...Shadows.sm,
   },
+  reportTypeButtonSmall: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    gap: Spacing.xs,
+  },
   reportTypeButtonActive: {
     backgroundColor: Colors.primaryBackground,
     borderColor: Colors.primary,
@@ -621,6 +666,9 @@ const styles = StyleSheet.create({
     fontSize: Typography.sm,
     fontWeight: Typography.medium,
     color: Colors.gray600,
+  },
+  reportTypeButtonTextSmall: {
+    fontSize: Typography.xs,
   },
   reportTypeButtonTextActive: {
     color: Colors.primary,
@@ -636,6 +684,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: Spacing.lg,
   },
+  summaryGridSmall: {
+    gap: Spacing.sm,
+  },
   summaryItem: {
     flex: 1,
     minWidth: '45%',
@@ -647,11 +698,20 @@ const styles = StyleSheet.create({
     borderColor: Colors.gray200,
     ...Shadows.sm,
   },
+  summaryItemSmall: {
+    minWidth: '48%',
+    padding: Spacing.md,
+  },
   summaryValue: {
     fontSize: Typography.xl,
     fontWeight: Typography.bold,
     color: Colors.gray900,
     marginTop: Spacing.sm,
+    textAlign: 'center',
+  },
+  summaryValueSmall: {
+    fontSize: Typography.lg,
+    marginTop: Spacing.xs,
   },
   summaryLabel: {
     fontSize: Typography.xs,
@@ -659,6 +719,9 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
     textAlign: 'center',
     fontWeight: Typography.medium,
+  },
+  summaryLabelSmall: {
+    fontSize: 10,
   },
   breakdownItem: {
     flexDirection: 'row',
