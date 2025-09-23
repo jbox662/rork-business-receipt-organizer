@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Home, Receipt, ChartPie, Settings } from "lucide-react-native";
+import { Home, Receipt, ChartPie, Settings, FileText } from "lucide-react-native";
 import React from "react";
 
 export default function TabLayout() {
@@ -41,6 +41,13 @@ export default function TabLayout() {
         options={{
           title: "Analytics",
           tabBarIcon: ({ color }) => <ChartPie size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="reports"
+        options={{
+          title: "Reports",
+          tabBarIcon: ({ color }) => <FileText size={24} color={color} />,
         }}
       />
       <Tabs.Screen
