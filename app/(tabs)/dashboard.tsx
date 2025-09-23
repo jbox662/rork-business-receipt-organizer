@@ -125,7 +125,7 @@ export default function DashboardScreen() {
         <View style={styles.statCard}>
           <View style={styles.statCardHeader}>
             <View style={[styles.statIcon, { backgroundColor: Colors.secondaryBackground }]}>
-              <DollarSign size={12} color={Colors.secondary} />
+              <DollarSign size={10} color={Colors.secondary} />
             </View>
             <View style={styles.statTrend}>
               {stats.monthChange > 0 ? (
@@ -148,7 +148,7 @@ export default function DashboardScreen() {
         <View style={styles.statCard}>
           <View style={styles.statCardHeader}>
             <View style={[styles.statIcon, { backgroundColor: Colors.orangeBackground }]}>
-              <Calendar size={12} color={Colors.orange} />
+              <Calendar size={10} color={Colors.orange} />
             </View>
           </View>
           <Text style={styles.statLabel}>This Week</Text>
@@ -159,7 +159,7 @@ export default function DashboardScreen() {
         <View style={styles.statCard}>
           <View style={styles.statCardHeader}>
             <View style={[styles.statIcon, { backgroundColor: Colors.accentBackground }]}>
-              <Target size={12} color={Colors.accent} />
+              <Target size={10} color={Colors.accent} />
             </View>
           </View>
           <Text style={styles.statLabel}>Average</Text>
@@ -197,7 +197,7 @@ export default function DashboardScreen() {
             <View style={[styles.analyticsCard, styles.analyticsCardSmall]}>
               <View style={styles.smallCardHeader}>
                 <View style={[styles.smallCardIcon, { backgroundColor: Colors.successLight }]}>
-                  <ShoppingBag size={12} color={Colors.success} />
+                  <ShoppingBag size={10} color={Colors.success} />
                 </View>
                 <Text style={styles.smallCardTitle}>Top Category</Text>
               </View>
@@ -212,7 +212,7 @@ export default function DashboardScreen() {
             <View style={[styles.analyticsCard, styles.analyticsCardSmall]}>
               <View style={styles.smallCardHeader}>
                 <View style={[styles.smallCardIcon, { backgroundColor: Colors.infoLight }]}>
-                  <Clock size={12} color={Colors.info} />
+                  <Clock size={10} color={Colors.info} />
                 </View>
                 <Text style={styles.smallCardTitle}>Recent Activity</Text>
               </View>
@@ -395,23 +395,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.white,
     borderRadius: BorderRadius.xl,
-    padding: 16,
+    padding: 12,
     ...Shadows.md,
     borderWidth: 1,
     borderColor: Colors.gray100,
-    height: 100,
+    minHeight: 85,
     justifyContent: 'space-between',
   },
   statCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   statIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -425,22 +425,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   statLabel: {
-    fontSize: 11,
+    fontSize: 10,
     color: Colors.gray500,
-    marginBottom: 4,
+    marginBottom: 2,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   statValue: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '800',
     color: Colors.gray900,
-    marginBottom: 2,
-    lineHeight: 22,
+    marginBottom: 1,
+    lineHeight: 20,
   },
   statSubtext: {
-    fontSize: 10,
+    fontSize: 9,
     color: Colors.gray400,
     fontWeight: '500',
   },
@@ -467,15 +467,15 @@ const styles = StyleSheet.create({
   analyticsCardSmall: {
     flex: 1,
     backgroundColor: Colors.white,
-    padding: 12,
+    padding: 10,
     borderWidth: 1,
     borderColor: Colors.gray100,
-    minHeight: 64,
+    height: 64,
     justifyContent: 'space-between',
   },
   analyticsGradient: {
-    padding: 16,
-    minHeight: 140,
+    padding: 14,
+    height: 140,
     justifyContent: 'space-between',
   },
   analyticsHeader: {
@@ -513,29 +513,32 @@ const styles = StyleSheet.create({
   smallCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
+    gap: 4,
+    marginBottom: 2,
   },
   smallCardIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
   smallCardTitle: {
-    fontSize: 11,
+    fontSize: 9,
     fontWeight: '600',
     color: Colors.gray600,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
   smallCardValue: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800',
     color: Colors.gray900,
-    marginBottom: 1,
+    marginBottom: 0,
+    lineHeight: 16,
   },
   smallCardSubtext: {
-    fontSize: 10,
+    fontSize: 8,
     color: Colors.gray500,
     fontWeight: '500',
   },
@@ -589,24 +592,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.white,
     borderRadius: BorderRadius.lg,
-    padding: 10,
+    padding: 8,
     alignItems: 'center',
     ...Shadows.sm,
     borderWidth: 1,
     borderColor: Colors.gray100,
-    minHeight: 60,
+    height: 56,
     justifyContent: 'center',
   },
   quickActionIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 3,
   },
   quickActionText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '600',
     color: Colors.gray700,
     textAlign: 'center',
