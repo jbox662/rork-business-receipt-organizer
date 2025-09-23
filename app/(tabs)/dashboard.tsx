@@ -7,14 +7,14 @@ import { ReceiptCard } from '@/components/ReceiptCard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Shadows, BorderRadius, Spacing } from '@/constants/design-system';
 import { DEFAULT_CATEGORIES } from '@/constants/categories';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 
 import type { Receipt as ReceiptType } from '@/types/receipt';
 
 export default function DashboardScreen() {
   const { receipts, isLoading, categories } = useReceipts();
   const { budgets, alerts } = useBudgets();
-  const insets = useSafeAreaInsets();
+
 
   // Sort receipts by date (newest first) for dashboard
   const sortedReceipts = receipts.sort((a: ReceiptType, b: ReceiptType) => 
@@ -99,7 +99,7 @@ export default function DashboardScreen() {
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
       <LinearGradient
         colors={[Colors.primary, Colors.primaryLight]}
