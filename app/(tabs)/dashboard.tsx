@@ -399,14 +399,13 @@ const styles = StyleSheet.create({
     ...Shadows.md,
     borderWidth: 1,
     borderColor: Colors.gray100,
-    height: 100,
-    justifyContent: 'space-between',
+    minHeight: 100,
   },
   statCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   statIcon: {
     width: 24,
@@ -427,7 +426,7 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 11,
     color: Colors.gray500,
-    marginBottom: 4,
+    marginBottom: 2,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -436,7 +435,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     color: Colors.gray900,
-    marginBottom: 2,
+    marginBottom: 1,
     lineHeight: 22,
   },
   statSubtext: {
@@ -471,7 +470,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.gray100,
     minHeight: 64,
-    justifyContent: 'space-between',
   },
   analyticsGradient: {
     padding: 16,
@@ -514,7 +512,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   smallCardIcon: {
     width: 20,
@@ -532,6 +530,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
     color: Colors.gray900,
+    marginTop: 2,
     marginBottom: 1,
   },
   smallCardSubtext: {
@@ -589,12 +588,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.white,
     borderRadius: BorderRadius.lg,
-    padding: 10,
+    padding: 12,
     alignItems: 'center',
     ...Shadows.sm,
     borderWidth: 1,
     borderColor: Colors.gray100,
-    minHeight: 60,
+    minHeight: 64,
     justifyContent: 'center',
   },
   quickActionIcon: {
