@@ -15,7 +15,7 @@ interface ReceiptCardProps {
 export function ReceiptCard({ receipt }: ReceiptCardProps) {
   const { width: screenWidth } = useWindowDimensions();
   const isSmallScreen = screenWidth < 400;
-  const SWIPE_THRESHOLD = screenWidth * 0.25;
+  const SWIPE_THRESHOLD = 50; // Much lower threshold for easier swiping
   const { deleteReceipt } = useReceipts();
   const [isDeleting, setIsDeleting] = useState(false);
   
@@ -90,8 +90,8 @@ export function ReceiptCard({ receipt }: ReceiptCardProps) {
     Animated.spring(translateX, {
       toValue: 0,
       useNativeDriver: true,
-      tension: 100,
-      friction: 8,
+      tension: 150, // Snappier reset
+      friction: 10,
     }).start();
     setIsSwipedOpen(false);
     clearAutoResetTimer();
@@ -126,7 +126,8 @@ export function ReceiptCard({ receipt }: ReceiptCardProps) {
   // Pan responder for swipe gestures
   const panResponder = PanResponder.create({
     onMoveShouldSetPanResponder: (_, gestureState) => {
-      return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dy) < 50;
+      // More lenient gesture detection - respond to smaller movements
+      return Math.abs(gestureState.dx) > 5 && Math.abs(gestureState.dy) < 80;
     },
     onPanResponderGrant: () => {
       // Clear auto-reset timer when user starts interacting
@@ -134,58 +135,59 @@ export function ReceiptCard({ receipt }: ReceiptCardProps) {
     },
     onPanResponderMove: (_, gestureState) => {
       const currentValue = isSwipedOpen ? -120 : 0;
-      const newValue = currentValue + gestureState.dx;
+      let newValue = currentValue + gestureState.dx;
       
-      // Constrain the movement
-      if (newValue <= 0 && newValue >= -120) {
-        translateX.setValue(newValue);
+      // Add some resistance when going beyond bounds for better feel
+      if (newValue > 0) {
+        newValue = newValue * 0.3; // Resistance when swiping right beyond closed position
+      } else if (newValue < -120) {
+        newValue = -120 + (newValue + 120) * 0.3; // Resistance when swiping left beyond open position
       }
+      
+      translateX.setValue(newValue);
     },
     onPanResponderRelease: (_, gestureState) => {
-      const currentValue = isSwipedOpen ? -120 : 0;
-      const finalPosition = currentValue + gestureState.dx;
+      const velocity = gestureState.vx;
       
-      if (isSwipedOpen) {
-        // If already open, check if we should close
-        if (gestureState.dx > 30 || finalPosition > -60) {
-          // Close the swipe
-          Animated.spring(translateX, {
-            toValue: 0,
-            useNativeDriver: true,
-            tension: 100,
-            friction: 8,
-          }).start();
-          setIsSwipedOpen(false);
-          clearAutoResetTimer();
-        } else {
-          // Keep it open
-          Animated.spring(translateX, {
-            toValue: -120,
-            useNativeDriver: true,
-            tension: 100,
-            friction: 8,
-          }).start();
-        }
+      // Consider velocity for more responsive feel
+      const shouldOpen = !isSwipedOpen && (gestureState.dx < -SWIPE_THRESHOLD || velocity < -0.5);
+      const shouldClose = isSwipedOpen && (gestureState.dx > SWIPE_THRESHOLD || velocity > 0.5);
+      
+      if (shouldClose) {
+        // Close the swipe
+        Animated.spring(translateX, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 150, // Higher tension for snappier feel
+          friction: 10,
+          velocity: velocity * 1000, // Use gesture velocity
+        }).start();
+        setIsSwipedOpen(false);
+        clearAutoResetTimer();
+      } else if (shouldOpen) {
+        // Open the swipe
+        Animated.spring(translateX, {
+          toValue: -120,
+          useNativeDriver: true,
+          tension: 150, // Higher tension for snappier feel
+          friction: 10,
+          velocity: velocity * 1000, // Use gesture velocity
+        }).start();
+        setIsSwipedOpen(true);
+        startAutoResetTimer();
       } else {
-        // If closed, check if we should open
-        if (gestureState.dx < -SWIPE_THRESHOLD) {
-          // Open the swipe
-          Animated.spring(translateX, {
-            toValue: -120,
-            useNativeDriver: true,
-            tension: 100,
-            friction: 8,
-          }).start();
-          setIsSwipedOpen(true);
+        // Return to current state
+        const targetValue = isSwipedOpen ? -120 : 0;
+        Animated.spring(translateX, {
+          toValue: targetValue,
+          useNativeDriver: true,
+          tension: 150,
+          friction: 10,
+          velocity: velocity * 1000,
+        }).start();
+        
+        if (isSwipedOpen) {
           startAutoResetTimer();
-        } else {
-          // Keep it closed
-          Animated.spring(translateX, {
-            toValue: 0,
-            useNativeDriver: true,
-            tension: 100,
-            friction: 8,
-          }).start();
         }
       }
     },
