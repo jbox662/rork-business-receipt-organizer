@@ -125,7 +125,7 @@ export default function DashboardScreen() {
         <View style={styles.statCard}>
           <View style={styles.statCardHeader}>
             <View style={[styles.statIcon, { backgroundColor: Colors.secondaryBackground }]}>
-              <DollarSign size={14} color={Colors.secondary} />
+              <DollarSign size={12} color={Colors.secondary} />
             </View>
             <View style={styles.statTrend}>
               {stats.monthChange > 0 ? (
@@ -148,7 +148,7 @@ export default function DashboardScreen() {
         <View style={styles.statCard}>
           <View style={styles.statCardHeader}>
             <View style={[styles.statIcon, { backgroundColor: Colors.orangeBackground }]}>
-              <Calendar size={14} color={Colors.orange} />
+              <Calendar size={12} color={Colors.orange} />
             </View>
           </View>
           <Text style={styles.statLabel}>This Week</Text>
@@ -159,7 +159,7 @@ export default function DashboardScreen() {
         <View style={styles.statCard}>
           <View style={styles.statCardHeader}>
             <View style={[styles.statIcon, { backgroundColor: Colors.accentBackground }]}>
-              <Target size={14} color={Colors.accent} />
+              <Target size={12} color={Colors.accent} />
             </View>
           </View>
           <Text style={styles.statLabel}>Average</Text>
@@ -395,23 +395,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.white,
     borderRadius: BorderRadius.xl,
-    padding: 14,
+    padding: 16,
     ...Shadows.md,
     borderWidth: 1,
     borderColor: Colors.gray100,
-    minHeight: 90,
+    height: 100,
     justifyContent: 'space-between',
   },
   statCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   statIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -425,20 +425,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: Colors.gray500,
-    marginBottom: 2,
+    marginBottom: 4,
     fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   statValue: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '800',
     color: Colors.gray900,
     marginBottom: 2,
+    lineHeight: 22,
   },
   statSubtext: {
-    fontSize: 12,
-    color: Colors.gray500,
+    fontSize: 10,
+    color: Colors.gray400,
     fontWeight: '500',
   },
   analyticsSection: {
