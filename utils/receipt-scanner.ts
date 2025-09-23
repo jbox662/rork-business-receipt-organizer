@@ -1,6 +1,18 @@
 import { ReceiptScanResult } from '@/types/receipt';
 import { DEFAULT_CATEGORIES } from '@/constants/categories';
 
+interface ImageQualityResult {
+  isGoodQuality: boolean;
+  issues: string[];
+  score: number;
+}
+
+interface ImageEnhancementResult {
+  success: boolean;
+  enhancedImageBase64?: string;
+  error?: string;
+}
+
 // Auto-categorization rules based on merchant names
 const MERCHANT_CATEGORY_RULES = {
   'Office Supplies': ['staples', 'office depot', 'best buy', 'amazon', 'costco', 'walmart', 'target'],
@@ -48,6 +60,115 @@ Return the data in this exact JSON format:
   "paymentMethod": "Credit Card",
   "suggestedCategory": "Category Name"
 }`;
+
+export async function checkImageQuality(imageBase64: string): Promise<ImageQualityResult> {
+  try {
+    console.log('Checking image quality...');
+    
+    const response = await fetch('https://toolkit.rork.com/text/llm/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages: [
+          { 
+            role: 'system', 
+            content: `You are an image quality checker for receipt scanning. Analyze the image and check for:
+            - Blur or out of focus areas
+            - Poor lighting (too dark or overexposed)
+            - Text readability
+            - Receipt completeness (all edges visible)
+            - Image orientation
+            
+            Return a JSON response with:
+            {
+              "isGoodQuality": boolean,
+              "issues": ["list of specific issues found"],
+              "score": number (0-100, where 100 is perfect quality)
+            }`
+          },
+          { 
+            role: 'user', 
+            content: [
+              { type: 'text', text: 'Please analyze this receipt image quality and identify any issues that might affect scanning accuracy.' },
+              { type: 'image', image: imageBase64 }
+            ]
+          }
+        ]
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to check image quality');
+    }
+    
+    const data = await response.json();
+    let cleanedResponse = data.completion.trim();
+    
+    // Clean markdown formatting
+    if (cleanedResponse.startsWith('```json')) {
+      cleanedResponse = cleanedResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    } else if (cleanedResponse.startsWith('```')) {
+      cleanedResponse = cleanedResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
+    
+    const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      cleanedResponse = jsonMatch[0];
+    }
+    
+    const result = JSON.parse(cleanedResponse);
+    
+    return {
+      isGoodQuality: result.isGoodQuality || false,
+      issues: result.issues || [],
+      score: result.score || 0
+    };
+  } catch (error) {
+    console.error('Error checking image quality:', error);
+    // Return a default "good quality" result if check fails
+    return {
+      isGoodQuality: true,
+      issues: [],
+      score: 75
+    };
+  }
+}
+
+export async function enhanceReceiptImage(imageBase64: string): Promise<ImageEnhancementResult> {
+  try {
+    console.log('Enhancing receipt image...');
+    
+    const response = await fetch('https://toolkit.rork.com/images/edit/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt: 'Enhance this receipt image for better text readability. Improve contrast, brightness, and sharpness. Auto-crop to remove unnecessary background. Straighten if rotated. Make the text as clear and readable as possible while maintaining the original receipt content.',
+        images: [{ type: 'image', image: imageBase64 }]
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to enhance image');
+    }
+    
+    const data = await response.json();
+    
+    return {
+      success: true,
+      enhancedImageBase64: data.image.base64Data
+    };
+  } catch (error) {
+    console.error('Error enhancing image:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
 
 export async function scanReceipt(imageBase64: string): Promise<ReceiptScanResult> {
   try {

@@ -1,14 +1,14 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Image, ScrollView, TextInput, Platform, Modal, StatusBar, useWindowDimensions, Animated, PanResponder } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Image, ScrollView, TextInput, Platform, Modal, StatusBar, useWindowDimensions, Animated, PanResponder, FlatList } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { Camera, Image as ImageIcon, Check, X, RotateCcw, Zap, ZapOff, ZoomIn, ZoomOut } from 'lucide-react-native';
+import { Camera, Image as ImageIcon, Check, X, RotateCcw, Zap, ZapOff, ZoomIn, ZoomOut, Plus, Trash2, AlertTriangle, Edit3, Layers, Wand2 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useReceipts } from '@/hooks/receipt-store-supabase';
 import { useAuth } from '@/hooks/auth-store';
-import { scanReceipt } from '@/utils/receipt-scanner';
+import { scanReceipt, checkImageQuality, enhanceReceiptImage } from '@/utils/receipt-scanner';
 import { uploadImageToSupabase } from '@/utils/image-upload';
 import { checkStorageSetup, testImageUploadDownload } from '@/utils/storage-setup';
 import { Receipt, ReceiptScanResult } from '@/types/receipt';
@@ -17,15 +17,37 @@ import { Colors } from '@/constants/design-system';
 
 
 
+interface BatchReceiptItem {
+  id: string;
+  imageUri: string;
+  imageBase64?: string;
+  scanResult?: ReceiptScanResult;
+  isProcessing: boolean;
+  qualityIssues: string[];
+  isEnhanced: boolean;
+}
+
 export default function ScanScreen() {
   const { saveReceipt, categories, isSaving } = useReceipts();
   const { user } = useAuth();
+  
+  // Single scan mode states
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedImageBase64, setSelectedImageBase64] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [scanResult, setScanResult] = useState<ReceiptScanResult | null>(null);
   const [editedResult, setEditedResult] = useState<ReceiptScanResult | null>(null);
+  
+  // Batch scan mode states
+  const [isBatchMode, setIsBatchMode] = useState(false);
+  const [batchReceipts, setBatchReceipts] = useState<BatchReceiptItem[]>([]);
+  const [currentBatchIndex, setCurrentBatchIndex] = useState(0);
+  
+  // Manual entry mode
+  const [showManualEntry, setShowManualEntry] = useState(false);
+  
+  // Camera and preview states
   const [showCamera, setShowCamera] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -583,13 +605,152 @@ export default function ScanScreen() {
     );
   }
 
+  // Manual entry modal
+  const ManualEntryModal = () => {
+    const [manualData, setManualData] = useState<ReceiptScanResult>({
+      merchant: '',
+      date: new Date().toISOString().split('T')[0],
+      total: 0,
+      tax: 0,
+      subtotal: 0,
+      items: [],
+      paymentMethod: 'Cash',
+      suggestedCategory: 'General'
+    });
+
+    const handleManualSave = () => {
+      setScanResult(manualData);
+      setEditedResult(manualData);
+      setShowManualEntry(false);
+    };
+
+    return (
+      <Modal
+        visible={showManualEntry}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowManualEntry(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.manualEntryContainer}>
+            <View style={styles.manualEntryHeader}>
+              <Text style={styles.manualEntryTitle}>Manual Entry</Text>
+              <TouchableOpacity onPress={() => setShowManualEntry(false)}>
+                <X size={24} color={Colors.gray600} />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.manualEntryContent}>
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Merchant *</Text>
+                <TextInput
+                  style={styles.fieldInput}
+                  value={manualData.merchant}
+                  onChangeText={(text) => setManualData({...manualData, merchant: text})}
+                  placeholder="Enter merchant name"
+                />
+              </View>
+              
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Date *</Text>
+                <TextInput
+                  style={styles.fieldInput}
+                  value={manualData.date}
+                  onChangeText={(text) => setManualData({...manualData, date: text})}
+                  placeholder="YYYY-MM-DD"
+                />
+              </View>
+              
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Total Amount *</Text>
+                <TextInput
+                  style={[styles.fieldInput, styles.totalInput]}
+                  value={manualData.total.toString()}
+                  onChangeText={(text) => setManualData({...manualData, total: parseFloat(text) || 0})}
+                  keyboardType="decimal-pad"
+                  placeholder="0.00"
+                />
+              </View>
+              
+              <View style={styles.fieldRow}>
+                <View style={[styles.field, { flex: 1 }]}>
+                  <Text style={styles.fieldLabel}>Subtotal</Text>
+                  <TextInput
+                    style={styles.fieldInput}
+                    value={manualData.subtotal.toString()}
+                    onChangeText={(text) => setManualData({...manualData, subtotal: parseFloat(text) || 0})}
+                    keyboardType="decimal-pad"
+                    placeholder="0.00"
+                  />
+                </View>
+                
+                <View style={[styles.field, { flex: 1, marginLeft: 12 }]}>
+                  <Text style={styles.fieldLabel}>Tax</Text>
+                  <TextInput
+                    style={styles.fieldInput}
+                    value={manualData.tax.toString()}
+                    onChangeText={(text) => setManualData({...manualData, tax: parseFloat(text) || 0})}
+                    keyboardType="decimal-pad"
+                    placeholder="0.00"
+                  />
+                </View>
+              </View>
+              
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Category</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {categories.map((cat: any) => (
+                    <TouchableOpacity
+                      key={cat.id}
+                      style={[
+                        styles.categoryChip,
+                        manualData.suggestedCategory === cat.name && styles.selectedChip
+                      ]}
+                      onPress={() => setManualData({...manualData, suggestedCategory: cat.name})}
+                    >
+                      <Text style={[
+                        styles.categoryChipText,
+                        manualData.suggestedCategory === cat.name && styles.selectedChipText
+                      ]}>
+                        {cat.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </ScrollView>
+            
+            <View style={styles.manualEntryActions}>
+              <Button
+                title="Cancel"
+                variant="secondary"
+                onPress={() => setShowManualEntry(false)}
+                style={styles.flexButton}
+              />
+              <Button
+                title="Continue"
+                variant="primary"
+                onPress={handleManualSave}
+                disabled={!manualData.merchant || !manualData.date || manualData.total <= 0}
+                style={styles.flexButton}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ManualEntryModal />
+      
       {!selectedImage ? (
         <View style={styles.uploadSection}>
           <Text style={styles.title}>Scan Your Receipt</Text>
-          <Text style={styles.subtitle}>Choose an option to add your receipt</Text>
+          <Text style={styles.subtitle}>Choose how you&apos;d like to add your receipt</Text>
           
+          {/* Enhanced scanning options */}
           <TouchableOpacity 
             style={styles.optionCard}
             onPress={openCamera}
@@ -597,7 +758,7 @@ export default function ScanScreen() {
           >
             <Camera size={32} color="#1E40AF" />
             <Text style={styles.optionTitle}>Take Photo</Text>
-            <Text style={styles.optionDescription}>Use your camera to capture a receipt</Text>
+            <Text style={styles.optionDescription}>Capture with quality check & auto-enhancement</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -607,7 +768,30 @@ export default function ScanScreen() {
           >
             <ImageIcon size={32} color="#10B981" />
             <Text style={styles.optionTitle}>Choose from Library</Text>
-            <Text style={styles.optionDescription}>Select an existing photo</Text>
+            <Text style={styles.optionDescription}>Select existing photo with enhancement</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.optionCard}
+            onPress={() => {
+              setIsBatchMode(true);
+              openCamera();
+            }}
+            activeOpacity={0.7}
+          >
+            <Layers size={32} color="#7C3AED" />
+            <Text style={styles.optionTitle}>Batch Scanning</Text>
+            <Text style={styles.optionDescription}>Scan multiple receipts in one session</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.optionCard}
+            onPress={() => setShowManualEntry(true)}
+            activeOpacity={0.7}
+          >
+            <Edit3 size={32} color="#F59E0B" />
+            <Text style={styles.optionTitle}>Manual Entry</Text>
+            <Text style={styles.optionDescription}>Enter receipt details manually</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -620,10 +804,44 @@ export default function ScanScreen() {
                 <Text style={styles.placeholderText}>No Image Selected</Text>
               </View>
             )}
+            
+            {/* Image enhancement button */}
+            {selectedImage && !isProcessing && (
+              <TouchableOpacity 
+                style={styles.enhanceButton}
+                onPress={async () => {
+                  if (selectedImageBase64) {
+                    setIsProcessing(true);
+                    try {
+                      const { enhanceReceiptImage } = await import('@/utils/receipt-scanner');
+                      const result = await enhanceReceiptImage(selectedImageBase64);
+                      if (result.success && result.enhancedImageBase64) {
+                        const enhancedUri = `data:image/jpeg;base64,${result.enhancedImageBase64}`;
+                        setSelectedImage(enhancedUri);
+                        setSelectedImageBase64(result.enhancedImageBase64);
+                        if (Platform.OS !== 'web') {
+                          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Enhancement failed:', error);
+                    } finally {
+                      setIsProcessing(false);
+                    }
+                  }
+                }}
+              >
+                <Wand2 size={16} color="white" />
+                <Text style={styles.enhanceButtonText}>Enhance</Text>
+              </TouchableOpacity>
+            )}
+            
             {isProcessing && (
               <View style={styles.processingOverlay}>
                 <ActivityIndicator size="large" color="white" />
-                <Text style={styles.processingText}>Analyzing receipt...</Text>
+                <Text style={styles.processingText}>
+                  {selectedImage ? 'Enhancing image...' : 'Analyzing receipt...'}
+                </Text>
               </View>
             )}
           </View>
@@ -1116,5 +1334,62 @@ const styles = StyleSheet.create({
   },
   debugButton: {
     width: '100%',
+  },
+  // Manual entry modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  manualEntryContainer: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '90%',
+    paddingTop: 20,
+  },
+  manualEntryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  manualEntryTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  manualEntryContent: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  manualEntryActions: {
+    flexDirection: 'row',
+    gap: 12,
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  // Enhancement button styles
+  enhanceButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  enhanceButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
