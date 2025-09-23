@@ -1,16 +1,19 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
-import { Plus, TrendingUp, Receipt, DollarSign, Calendar } from 'lucide-react-native';
+import { TrendingUp, Receipt, DollarSign, Calendar, BarChart3, Camera, FileText, Target, ArrowUpRight, ArrowDownRight } from 'lucide-react-native';
 import { useReceipts } from '@/hooks/receipt-store-supabase';
 import { ReceiptCard } from '@/components/ReceiptCard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Shadows, BorderRadius, Spacing } from '@/constants/design-system';
+import { DEFAULT_CATEGORIES } from '@/constants/categories';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { Receipt as ReceiptType } from '@/types/receipt';
 
 export default function DashboardScreen() {
   const { receipts, isLoading, categories } = useReceipts();
+  const insets = useSafeAreaInsets();
 
   // Sort receipts by date (newest first) for dashboard
   const sortedReceipts = receipts.sort((a: ReceiptType, b: ReceiptType) => 
@@ -21,18 +24,70 @@ export default function DashboardScreen() {
   
   const currentMonth = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   
-  // Calculate totals from all receipts (not filtered)
-  const totalExpenses = receipts.reduce((sum: number, r: ReceiptType) => sum + r.total, 0);
-  const totalCount = receipts.length;
-  
-  const monthTotal = receipts
-    .filter((r: ReceiptType) => {
+  // Enhanced statistics calculations
+  const stats = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+    const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+    
+    // Current month receipts
+    const currentMonthReceipts = receipts.filter((r: ReceiptType) => {
       const receiptDate = new Date(r.receiptDate);
-      const now = new Date();
-      return receiptDate.getMonth() === now.getMonth() && 
-             receiptDate.getFullYear() === now.getFullYear();
-    })
-    .reduce((sum: number, r: ReceiptType) => sum + r.total, 0);
+      return receiptDate.getMonth() === currentMonth && receiptDate.getFullYear() === currentYear;
+    });
+    
+    // Last month receipts
+    const lastMonthReceipts = receipts.filter((r: ReceiptType) => {
+      const receiptDate = new Date(r.receiptDate);
+      return receiptDate.getMonth() === lastMonth && receiptDate.getFullYear() === lastMonthYear;
+    });
+    
+    // This week receipts
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+    
+    const thisWeekReceipts = receipts.filter((r: ReceiptType) => {
+      const receiptDate = new Date(r.receiptDate);
+      return receiptDate >= weekStart;
+    });
+    
+    const totalExpenses = receipts.reduce((sum: number, r: ReceiptType) => sum + r.total, 0);
+    const monthTotal = currentMonthReceipts.reduce((sum: number, r: ReceiptType) => sum + r.total, 0);
+    const lastMonthTotal = lastMonthReceipts.reduce((sum: number, r: ReceiptType) => sum + r.total, 0);
+    const weekTotal = thisWeekReceipts.reduce((sum: number, r: ReceiptType) => sum + r.total, 0);
+    const avgPerReceipt = receipts.length > 0 ? totalExpenses / receipts.length : 0;
+    
+    // Calculate month-over-month change
+    const monthChange = lastMonthTotal > 0 ? ((monthTotal - lastMonthTotal) / lastMonthTotal) * 100 : 0;
+    
+    // Category breakdown
+    const categoryStats = DEFAULT_CATEGORIES.map(cat => {
+      const categoryReceipts = receipts.filter((r: ReceiptType) => r.category === cat.name);
+      const total = categoryReceipts.reduce((sum: number, r: ReceiptType) => sum + r.total, 0);
+      return {
+        ...cat,
+        total,
+        count: categoryReceipts.length,
+        percentage: totalExpenses > 0 ? (total / totalExpenses) * 100 : 0
+      };
+    }).sort((a, b) => b.total - a.total);
+    
+    return {
+      totalExpenses,
+      monthTotal,
+      lastMonthTotal,
+      weekTotal,
+      avgPerReceipt,
+      monthChange,
+      totalCount: receipts.length,
+      monthCount: currentMonthReceipts.length,
+      weekCount: thisWeekReceipts.length,
+      categoryStats: categoryStats.slice(0, 4), // Top 4 categories
+    };
+  }, [receipts]);
 
   if (isLoading || !receipts || !categories) {
     return (
@@ -43,7 +98,8 @@ export default function DashboardScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
       <LinearGradient
         colors={[Colors.primary, Colors.primaryLight]}
         style={styles.header}
@@ -51,41 +107,132 @@ export default function DashboardScreen() {
         <View style={styles.headerContent}>
           <Text style={styles.greeting}>Welcome back!</Text>
           <Text style={styles.date}>{currentMonth}</Text>
+          <View style={styles.monthlyInsight}>
+            <Text style={styles.monthlyAmount}>${stats.monthTotal.toFixed(2)}</Text>
+            <View style={styles.changeIndicator}>
+              {stats.monthChange >= 0 ? (
+                <ArrowUpRight size={14} color={Colors.orangeLight} />
+              ) : (
+                <ArrowDownRight size={14} color={Colors.secondaryLight} />
+              )}
+              <Text style={[styles.changeText, { 
+                color: stats.monthChange >= 0 ? Colors.orangeLight : Colors.secondaryLight 
+              }]}>
+                {Math.abs(stats.monthChange).toFixed(1)}%
+              </Text>
+            </View>
+          </View>
         </View>
-        
+      </LinearGradient>
+
+      {/* Quick Actions */}
+      <View style={styles.quickActionsContainer}>
         <TouchableOpacity 
-          style={styles.scanButton}
+          style={[styles.quickAction, styles.primaryAction]}
           onPress={() => router.push('/scan')}
           activeOpacity={0.8}
         >
-          <Plus size={20} color="white" />
-          <Text style={styles.scanButtonText}>Scan Receipt</Text>
+          <LinearGradient
+            colors={[Colors.primary, Colors.primaryLight]}
+            style={styles.quickActionGradient}
+          >
+            <Camera size={24} color="white" />
+            <Text style={styles.quickActionText}>Scan Receipt</Text>
+          </LinearGradient>
         </TouchableOpacity>
-      </LinearGradient>
+        
+        <TouchableOpacity 
+          style={styles.quickAction}
+          onPress={() => router.push('/(tabs)/analytics')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.quickActionContent}>
+            <BarChart3 size={20} color={Colors.accent} />
+            <Text style={styles.quickActionLabel}>Analytics</Text>
+          </View>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.quickAction}
+          onPress={() => router.push('/(tabs)/receipts')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.quickActionContent}>
+            <FileText size={20} color={Colors.secondary} />
+            <Text style={styles.quickActionLabel}>All Receipts</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
 
-      <View style={styles.statsContainer}>
+      {/* Enhanced Stats Grid */}
+      <View style={styles.statsGrid}>
         <View style={styles.statCard}>
-          <View style={[styles.statIcon, { backgroundColor: Colors.secondaryBackground }]}>
-            <DollarSign size={16} color={Colors.secondary} />
+          <View style={styles.statHeader}>
+            <View style={[styles.statIcon, { backgroundColor: Colors.secondaryBackground }]}>
+              <DollarSign size={18} color={Colors.secondary} />
+            </View>
+            <Text style={styles.statLabel}>Total Expenses</Text>
           </View>
-          <Text style={styles.statLabel}>Total Expenses</Text>
-          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>${totalExpenses.toFixed(2)}</Text>
+          <Text style={styles.statValue}>${stats.totalExpenses.toFixed(2)}</Text>
+          <Text style={styles.statSubtext}>{stats.totalCount} receipts</Text>
         </View>
         
         <View style={styles.statCard}>
-          <View style={[styles.statIcon, { backgroundColor: Colors.orangeBackground }]}>
-            <Calendar size={16} color={Colors.orange} />
+          <View style={styles.statHeader}>
+            <View style={[styles.statIcon, { backgroundColor: Colors.orangeBackground }]}>
+              <Calendar size={18} color={Colors.orange} />
+            </View>
+            <Text style={styles.statLabel}>This Month</Text>
           </View>
-          <Text style={styles.statLabel}>This Month</Text>
-          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>${monthTotal.toFixed(2)}</Text>
+          <Text style={styles.statValue}>${stats.monthTotal.toFixed(2)}</Text>
+          <Text style={styles.statSubtext}>{stats.monthCount} receipts</Text>
         </View>
         
         <View style={styles.statCard}>
-          <View style={[styles.statIcon, { backgroundColor: Colors.accentBackground }]}>
-            <Receipt size={16} color={Colors.accent} />
+          <View style={styles.statHeader}>
+            <View style={[styles.statIcon, { backgroundColor: Colors.accentBackground }]}>
+              <TrendingUp size={18} color={Colors.accent} />
+            </View>
+            <Text style={styles.statLabel}>This Week</Text>
           </View>
-          <Text style={styles.statLabel}>Total Receipts</Text>
-          <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{totalCount}</Text>
+          <Text style={styles.statValue}>${stats.weekTotal.toFixed(2)}</Text>
+          <Text style={styles.statSubtext}>{stats.weekCount} receipts</Text>
+        </View>
+        
+        <View style={styles.statCard}>
+          <View style={styles.statHeader}>
+            <View style={[styles.statIcon, { backgroundColor: Colors.primaryBackground }]}>
+              <Target size={18} color={Colors.primary} />
+            </View>
+            <Text style={styles.statLabel}>Avg per Receipt</Text>
+          </View>
+          <Text style={styles.statValue}>${stats.avgPerReceipt.toFixed(2)}</Text>
+          <Text style={styles.statSubtext}>average amount</Text>
+        </View>
+      </View>
+
+      {/* Top Categories */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Top Categories</Text>
+          <TouchableOpacity onPress={() => router.push('/(tabs)/analytics')}>
+            <Text style={styles.seeAll}>View All</Text>
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.categoriesContainer}>
+          {stats.categoryStats.map((category, index) => (
+            <View key={category.id} style={styles.categoryItem}>
+              <View style={styles.categoryInfo}>
+                <View style={[styles.categoryDot, { backgroundColor: category.color }]} />
+                <Text style={styles.categoryName}>{category.name}</Text>
+              </View>
+              <View style={styles.categoryStats}>
+                <Text style={styles.categoryAmount}>${category.total.toFixed(2)}</Text>
+                <Text style={styles.categoryPercentage}>{category.percentage.toFixed(1)}%</Text>
+              </View>
+            </View>
+          ))}
         </View>
       </View>
 
@@ -119,12 +266,17 @@ export default function DashboardScreen() {
           </Text>
         </View>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: Colors.primary,
+  },
+  scrollView: {
     flex: 1,
     backgroundColor: Colors.gray50,
   },
@@ -135,81 +287,179 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingTop: 20,
-    paddingBottom: 30,
+    paddingBottom: 40,
     paddingHorizontal: 20,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
   },
   headerContent: {
-    marginBottom: 20,
+    alignItems: 'flex-start',
   },
   greeting: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: 32,
+    fontWeight: '800',
     color: 'white',
     marginBottom: 4,
   },
   date: {
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 16,
   },
-  scanButton: {
+  monthlyInsight: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 12,
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    gap: 12,
   },
-  scanButtonText: {
+  monthlyAmount: {
+    fontSize: 24,
+    fontWeight: '700',
     color: 'white',
-    fontSize: 16,
+  },
+  changeIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  changeText: {
+    fontSize: 12,
     fontWeight: '600',
   },
-  statsContainer: {
+  quickActionsContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     marginTop: -20,
+    gap: 12,
+    marginBottom: 24,
+  },
+  quickAction: {
+    flex: 1,
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
+    ...Shadows.lg,
+  },
+  primaryAction: {
+    flex: 1.5,
+  },
+  quickActionGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
     gap: 8,
   },
-  statCard: {
-    flex: 1,
+  quickActionContent: {
     backgroundColor: Colors.white,
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.lg,
+    flexDirection: 'row',
     alignItems: 'center',
-    ...Shadows.lg,
-    minHeight: 90,
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    gap: 6,
     borderWidth: 1,
     borderColor: Colors.gray100,
   },
+  quickActionText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  quickActionLabel: {
+    color: Colors.gray700,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 20,
+    gap: 12,
+    marginBottom: 24,
+  },
+  statCard: {
+    flex: 1,
+    minWidth: '45%',
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    ...Shadows.md,
+    borderWidth: 1,
+    borderColor: Colors.gray100,
+  },
+  statHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8,
+  },
   statIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 6,
     ...Shadows.sm,
   },
   statLabel: {
-    fontSize: 10,
-    color: Colors.gray500,
-    marginBottom: 6,
-    textAlign: 'center',
-    lineHeight: 12,
+    fontSize: 12,
+    color: Colors.gray600,
     fontWeight: '600',
+    flex: 1,
   },
   statValue: {
-    fontSize: 14,
+    fontSize: 20,
     fontWeight: '800',
     color: Colors.gray900,
-    textAlign: 'center',
-    flexShrink: 1,
-    numberOfLines: 1,
+    marginBottom: 4,
+  },
+  statSubtext: {
+    fontSize: 11,
+    color: Colors.gray500,
+    fontWeight: '500',
+  },
+  categoriesContainer: {
+    gap: 12,
+  },
+  categoryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+  },
+  categoryInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 12,
+  },
+  categoryDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  categoryName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.gray700,
+    flex: 1,
+  },
+  categoryStats: {
+    alignItems: 'flex-end',
+  },
+  categoryAmount: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.gray900,
+  },
+  categoryPercentage: {
+    fontSize: 11,
+    color: Colors.gray500,
+    fontWeight: '500',
   },
   section: {
     marginTop: 24,
