@@ -69,7 +69,6 @@ export default function ReportsScreen() {
     end: Date | null;
   }>({ start: null, end: null });
 
-  // Filter receipts based on selected period
   const filteredReceipts = useMemo(() => {
     const now = new Date();
     let startDate: Date;
@@ -104,13 +103,11 @@ export default function ReportsScreen() {
     });
   }, [receipts, selectedPeriod, customDateRange]);
 
-  // Generate report data
   const reportData = useMemo((): ReportData => {
     const totalSpent = filteredReceipts.reduce((sum: number, r: Receipt) => sum + r.total, 0);
     const totalReceipts = filteredReceipts.length;
     const averagePerReceipt = totalReceipts > 0 ? totalSpent / totalReceipts : 0;
 
-    // Category breakdown
     const categoryMap = new Map<string, { amount: number; count: number }>();
     filteredReceipts.forEach((receipt: Receipt) => {
       const existing = categoryMap.get(receipt.category) || { amount: 0, count: 0 };
@@ -129,7 +126,6 @@ export default function ReportsScreen() {
       }))
       .sort((a, b) => b.amount - a.amount);
 
-    // Merchant breakdown
     const merchantMap = new Map<string, { amount: number; count: number }>();
     filteredReceipts.forEach((receipt: Receipt) => {
       const existing = merchantMap.get(receipt.merchant) || { amount: 0, count: 0 };
@@ -147,9 +143,8 @@ export default function ReportsScreen() {
         percentage: totalSpent > 0 ? (data.amount / totalSpent) * 100 : 0,
       }))
       .sort((a, b) => b.amount - a.amount)
-      .slice(0, 10); // Top 10 merchants
+      .slice(0, 10);
 
-    // Daily trends (last 30 days)
     const dailyMap = new Map<string, { amount: number; count: number }>();
     const last30Days = filteredReceipts.filter((receipt: Receipt) => {
       const receiptDate = new Date(receipt.receiptDate);
@@ -174,7 +169,6 @@ export default function ReportsScreen() {
       }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
-    // Monthly trends (last 12 months)
     const monthlyMap = new Map<string, { amount: number; count: number }>();
     const last12Months = filteredReceipts.filter((receipt: Receipt) => {
       const receiptDate = new Date(receipt.receiptDate);
@@ -254,7 +248,6 @@ export default function ReportsScreen() {
       const reportText = generateReportText();
       
       if (Platform.OS === 'web') {
-        // For web, create a downloadable file
         const blob = new Blob([reportText], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -264,11 +257,7 @@ export default function ReportsScreen() {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        if (Platform.OS !== 'web') {
-          Alert.alert('Success', 'Report downloaded successfully!');
-        }
       } else {
-        // For mobile, use Share API
         await Share.share({
           message: reportText,
           title: `Expense Report - ${selectedPeriod}`,
@@ -278,8 +267,6 @@ export default function ReportsScreen() {
       console.error('Error exporting report:', error);
       if (Platform.OS !== 'web') {
         Alert.alert('Error', 'Failed to export report. Please try again.');
-      } else {
-        console.error('Failed to export report:', error);
       }
     }
   };
@@ -292,33 +279,27 @@ export default function ReportsScreen() {
       <Card style={styles.card}>
         <Text style={styles.cardTitle}>Report Period</Text>
         <View style={[styles.periodContainer, isSmallScreen && styles.periodContainerSmall]}>
-          {(['week', 'month', 'quarter', 'year'] as ReportPeriod[]).map((period) => {
-            return (
-              <TouchableOpacity
-                key={period}
+          {(['week', 'month', 'quarter', 'year'] as ReportPeriod[]).map((period) => (
+            <TouchableOpacity
+              key={period}
+              style={[
+                styles.periodButton,
+                isSmallScreen && styles.periodButtonSmall,
+                selectedPeriod === period && styles.periodButtonActive,
+              ]}
+              onPress={() => setSelectedPeriod(period)}
+            >
+              <Text
                 style={[
-                  styles.periodButton,
-                  isSmallScreen && styles.periodButtonSmall,
-                  selectedPeriod === period && styles.periodButtonActive,
+                  styles.periodButtonText,
+                  isSmallScreen && styles.periodButtonTextSmall,
+                  selectedPeriod === period && styles.periodButtonTextActive,
                 ]}
-                onPress={() => {
-                  if (period.trim() && period.length <= 20) {
-                    setSelectedPeriod(period);
-                  }
-                }}
               >
-                <Text
-                  style={[
-                    styles.periodButtonText,
-                    isSmallScreen && styles.periodButtonTextSmall,
-                    selectedPeriod === period && styles.periodButtonTextActive,
-                  ]}
-                >
-                  {period.charAt(0).toUpperCase() + period.slice(1)}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+                {period.charAt(0).toUpperCase() + period.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </Card>
     );
@@ -382,47 +363,64 @@ export default function ReportsScreen() {
           <View style={[styles.summaryGrid, isSmallScreen && styles.summaryGridSmall]}>
             <View style={[styles.summaryItem, isSmallScreen && styles.summaryItemSmall]}>
               <DollarSign size={isSmallScreen ? 20 : 24} color="#10B981" />
-              <Text style={[styles.summaryValue, isSmallScreen && styles.summaryValueSmall]}>${reportData.totalSpent.toFixed(2)}</Text>
-              <Text style={[styles.summaryLabel, isSmallScreen && styles.summaryLabelSmall]}>Total Spent</Text>
+              <Text style={[styles.summaryValue, isSmallScreen && styles.summaryValueSmall]}>
+                ${reportData.totalSpent.toFixed(2)}
+              </Text>
+              <Text style={[styles.summaryLabel, isSmallScreen && styles.summaryLabelSmall]}>
+                Total Spent
+              </Text>
             </View>
             <View style={[styles.summaryItem, isSmallScreen && styles.summaryItemSmall]}>
               <FileText size={isSmallScreen ? 20 : 24} color="#3B82F6" />
-              <Text style={[styles.summaryValue, isSmallScreen && styles.summaryValueSmall]}>{reportData.totalReceipts}</Text>
-              <Text style={[styles.summaryLabel, isSmallScreen && styles.summaryLabelSmall]}>Receipts</Text>
+              <Text style={[styles.summaryValue, isSmallScreen && styles.summaryValueSmall]}>
+                {reportData.totalReceipts}
+              </Text>
+              <Text style={[styles.summaryLabel, isSmallScreen && styles.summaryLabelSmall]}>
+                Receipts
+              </Text>
             </View>
             <View style={[styles.summaryItem, isSmallScreen && styles.summaryItemSmall]}>
               <Target size={isSmallScreen ? 20 : 24} color="#8B5CF6" />
-              <Text style={[styles.summaryValue, isSmallScreen && styles.summaryValueSmall]}>${reportData.averagePerReceipt.toFixed(2)}</Text>
-              <Text style={[styles.summaryLabel, isSmallScreen && styles.summaryLabelSmall]}>Average</Text>
+              <Text style={[styles.summaryValue, isSmallScreen && styles.summaryValueSmall]}>
+                ${reportData.averagePerReceipt.toFixed(2)}
+              </Text>
+              <Text style={[styles.summaryLabel, isSmallScreen && styles.summaryLabelSmall]}>
+                Average
+              </Text>
             </View>
             <View style={[styles.summaryItem, isSmallScreen && styles.summaryItemSmall]}>
               <ShoppingBag size={isSmallScreen ? 20 : 24} color="#F59E0B" />
-              <Text style={[styles.summaryValue, isSmallScreen && styles.summaryValueSmall]}>{reportData.topCategory}</Text>
-              <Text style={[styles.summaryLabel, isSmallScreen && styles.summaryLabelSmall]}>Top Category</Text>
+              <Text style={[styles.summaryValue, isSmallScreen && styles.summaryValueSmall]}>
+                {reportData.topCategory}
+              </Text>
+              <Text style={[styles.summaryLabel, isSmallScreen && styles.summaryLabelSmall]}>
+                Top Category
+              </Text>
             </View>
           </View>
         </Card>
 
         <Card style={styles.card}>
-        <Text style={styles.cardTitle}>Top Categories</Text>
-        {reportData.categoryBreakdown.slice(0, 5).map((cat, index) => (
-          <View key={cat.category} style={styles.breakdownItem}>
-            <View style={styles.breakdownInfo}>
-              <Text style={styles.breakdownRank}>{index + 1}</Text>
-              <View style={styles.breakdownDetails}>
-                <Text style={styles.breakdownName}>{cat.category}</Text>
-                <Text style={styles.breakdownSubtext}>{cat.count} receipts</Text>
+          <Text style={styles.cardTitle}>Top Categories</Text>
+          {reportData.categoryBreakdown.slice(0, 5).map((cat, index) => (
+            <View key={cat.category} style={styles.breakdownItem}>
+              <View style={styles.breakdownInfo}>
+                <Text style={styles.breakdownRank}>{index + 1}</Text>
+                <View style={styles.breakdownDetails}>
+                  <Text style={styles.breakdownName}>{cat.category}</Text>
+                  <Text style={styles.breakdownSubtext}>{cat.count} receipts</Text>
+                </View>
+              </View>
+              <View style={styles.breakdownAmount}>
+                <Text style={styles.breakdownValue}>${cat.amount.toFixed(2)}</Text>
+                <Text style={styles.breakdownPercentage}>{cat.percentage.toFixed(1)}%</Text>
               </View>
             </View>
-            <View style={styles.breakdownAmount}>
-              <Text style={styles.breakdownValue}>${cat.amount.toFixed(2)}</Text>
-              <Text style={styles.breakdownPercentage}>{cat.percentage.toFixed(1)}%</Text>
-            </View>
-          </View>
-        ))}
-      </Card>
-    </>
-  );
+          ))}
+        </Card>
+      </>
+    );
+  };
 
   const renderCategoryReport = () => (
     <Card style={styles.card}>
@@ -480,7 +478,10 @@ export default function ReportsScreen() {
         <Text style={styles.cardTitle}>Monthly Trends</Text>
         {reportData.monthlyTrends.slice(-6).map((trend) => {
           const [year, month] = trend.month.split('-');
-          const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+          const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { 
+            month: 'long', 
+            year: 'numeric' 
+          });
           return (
             <View key={trend.month} style={styles.trendItem}>
               <View style={styles.trendInfo}>
@@ -497,7 +498,11 @@ export default function ReportsScreen() {
         <Text style={styles.cardTitle}>Recent Daily Activity</Text>
         {reportData.dailyTrends.slice(-7).map((trend) => {
           const date = new Date(trend.date);
-          const dayName = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+          const dayName = date.toLocaleDateString('en-US', { 
+            weekday: 'short', 
+            month: 'short', 
+            day: 'numeric' 
+          });
           return (
             <View key={trend.date} style={styles.trendItem}>
               <View style={styles.trendInfo}>
