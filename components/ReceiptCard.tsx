@@ -212,6 +212,8 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.lg,
     marginVertical: Spacing.sm,
     position: 'relative',
+    overflow: 'hidden',
+    borderRadius: BorderRadius.xl,
   },
   cardContainerSmall: {
     marginHorizontal: Spacing.md,
@@ -243,6 +245,7 @@ const styles = StyleSheet.create({
     zIndex: 2,
     backgroundColor: Colors.white,
     borderRadius: BorderRadius.xl,
+    width: '100%',
   },
   card: {
     flexDirection: 'row',
@@ -253,9 +256,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.gray100,
     minHeight: 100,
+    width: '100%',
   },
   cardSmall: {
-    marginHorizontal: Spacing.md,
     padding: Spacing.md,
     minHeight: 90,
   },
