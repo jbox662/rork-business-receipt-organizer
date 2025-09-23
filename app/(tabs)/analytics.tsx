@@ -424,10 +424,9 @@ const styles = StyleSheet.create({
   },
   categoryRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Spacing.lg,
-    paddingHorizontal: Spacing.xs,
+    paddingHorizontal: 0,
     minHeight: 44,
   },
 
@@ -435,6 +434,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    marginRight: Spacing.md,
     minWidth: 0,
   },
   categoryDot: {
@@ -449,6 +449,7 @@ const styles = StyleSheet.create({
     color: Colors.gray700,
     fontWeight: Typography.medium,
     flex: 1,
+    marginRight: Spacing.xs,
   },
 
   categoryCount: {
@@ -458,7 +459,7 @@ const styles = StyleSheet.create({
   },
   categoryStats: {
     alignItems: 'flex-end',
-    minWidth: 80,
+    width: 90,
     flexShrink: 0,
   },
 
