@@ -220,19 +220,21 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
         
-        <View style={styles.categoriesContainer}>
-          {stats.categoryStats.map((category, index) => (
-            <View key={category.id} style={styles.categoryItem}>
-              <View style={styles.categoryInfo}>
-                <View style={[styles.categoryDot, { backgroundColor: category.color }]} />
-                <Text style={styles.categoryName}>{category.name}</Text>
+        <View style={styles.categoriesCard}>
+          <View style={styles.categoriesContainer}>
+            {stats.categoryStats.map((category, index) => (
+              <View key={category.id} style={styles.categoryItem}>
+                <View style={styles.categoryInfo}>
+                  <View style={[styles.categoryDot, { backgroundColor: category.color }]} />
+                  <Text style={styles.categoryName} numberOfLines={1}>{category.name}</Text>
+                </View>
+                <View style={styles.categoryStats}>
+                  <Text style={styles.categoryAmount}>${category.total.toFixed(2)}</Text>
+                  <Text style={styles.categoryPercentage}>{category.percentage.toFixed(1)}%</Text>
+                </View>
               </View>
-              <View style={styles.categoryStats}>
-                <Text style={styles.categoryAmount}>${category.total.toFixed(2)}</Text>
-                <Text style={styles.categoryPercentage}>{category.percentage.toFixed(1)}%</Text>
-              </View>
-            </View>
-          ))}
+            ))}
+          </View>
         </View>
       </View>
 
@@ -376,7 +378,8 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    minWidth: '45%',
+    minWidth: 160,
+    maxWidth: '48%',
     backgroundColor: Colors.white,
     borderRadius: BorderRadius.xl,
     padding: Spacing.lg,
@@ -415,34 +418,50 @@ const styles = StyleSheet.create({
     color: Colors.gray500,
     fontWeight: '500',
   },
+  categoriesCard: {
+    backgroundColor: Colors.white,
+    marginHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    ...Shadows.md,
+    borderWidth: 1,
+    borderColor: Colors.gray100,
+  },
   categoriesContainer: {
-    gap: 12,
+    gap: 16,
   },
   categoryItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    paddingVertical: 4,
+    minHeight: 32,
   },
   categoryInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
     gap: 12,
+    minWidth: 0,
+    paddingRight: 12,
   },
   categoryDot: {
     width: 12,
     height: 12,
     borderRadius: 6,
+    flexShrink: 0,
   },
   categoryName: {
     fontSize: 14,
     fontWeight: '600',
     color: Colors.gray700,
     flex: 1,
+    minWidth: 0,
   },
   categoryStats: {
     alignItems: 'flex-end',
+    flexShrink: 0,
+    minWidth: 60,
   },
   categoryAmount: {
     fontSize: 14,
@@ -453,6 +472,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.gray500,
     fontWeight: '500',
+    marginTop: 2,
   },
   section: {
     marginTop: 24,
