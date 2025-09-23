@@ -226,29 +226,25 @@ export default function AnalyticsScreen() {
       <View style={[styles.section, isSmallScreen && styles.sectionSmall]}>
         <View style={styles.sectionHeader}>
           <PieChart size={isSmallScreen ? 18 : 20} color={Colors.primary} />
-          <Text style={styles.sectionTitle}>Spending by Category</Text>
+          <Text style={styles.sectionTitle}>Top Categories</Text>
+          <Text style={styles.viewAllButton}>View All</Text>
         </View>
         
         {categoryStats.filter((cat: any) => cat.total > 0).map((category: any) => (
-          <View key={category.id} style={styles.categoryRow}>
+          <View key={category.id} style={[styles.categoryRow, isSmallScreen && styles.categoryRowSmall]}>
             <View style={styles.categoryInfo}>
               <View style={[styles.categoryDot, { backgroundColor: category.color }]} />
-              <Text style={styles.categoryName}>{category.name}</Text>
-              <Text style={styles.categoryCount}>({category.count})</Text>
+              <Text style={[styles.categoryName, isSmallScreen && styles.categoryNameSmall]} numberOfLines={1}>
+                {category.name}
+              </Text>
             </View>
-            <View style={styles.categoryStats}>
-              <Text style={styles.categoryAmount}>${category.total.toFixed(2)}</Text>
-              <View style={styles.percentageBar}>
-                <View 
-                  style={[
-                    styles.percentageFill, 
-                    { 
-                      width: `${category.percentage}%`,
-                      backgroundColor: category.color 
-                    }
-                  ]} 
-                />
-              </View>
+            <View style={[styles.categoryStats, isSmallScreen && styles.categoryStatsSmall]}>
+              <Text style={[styles.categoryAmount, isSmallScreen && styles.categoryAmountSmall]}>
+                ${category.total.toFixed(2)}
+              </Text>
+              <Text style={[styles.categoryPercentage, isSmallScreen && styles.categoryPercentageSmall]}>
+                {category.percentage.toFixed(1)}%
+              </Text>
             </View>
           </View>
         ))}
@@ -437,22 +433,32 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Spacing.lg,
+    paddingRight: Spacing.xs,
+  },
+  categoryRowSmall: {
+    paddingRight: 0,
   },
   categoryInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    minWidth: 0,
   },
   categoryDot: {
     width: 12,
     height: 12,
     borderRadius: 6,
     marginRight: Spacing.sm,
+    flexShrink: 0,
   },
   categoryName: {
     fontSize: Typography.sm,
     color: Colors.gray700,
     fontWeight: Typography.medium,
+    flex: 1,
+  },
+  categoryNameSmall: {
+    fontSize: Typography.xs,
   },
   categoryCount: {
     fontSize: Typography.xs,
@@ -461,13 +467,36 @@ const styles = StyleSheet.create({
   },
   categoryStats: {
     alignItems: 'flex-end',
-    flex: 1,
+    minWidth: 80,
+    flexShrink: 0,
+  },
+  categoryStatsSmall: {
+    minWidth: 70,
   },
   categoryAmount: {
     fontSize: Typography.sm,
     fontWeight: Typography.semibold,
     color: Colors.gray900,
-    marginBottom: Spacing.xs,
+    textAlign: 'right',
+  },
+  categoryAmountSmall: {
+    fontSize: Typography.xs,
+  },
+  categoryPercentage: {
+    fontSize: Typography.xs,
+    color: Colors.gray500,
+    fontWeight: Typography.medium,
+    textAlign: 'right',
+    marginTop: 2,
+  },
+  categoryPercentageSmall: {
+    fontSize: 10,
+  },
+  viewAllButton: {
+    fontSize: Typography.xs,
+    color: Colors.primary,
+    fontWeight: Typography.medium,
+    marginLeft: 'auto',
   },
   percentageBar: {
     width: 100,
