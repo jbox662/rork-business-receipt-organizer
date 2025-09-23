@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Alert, useWindowDimensions } from 'react-native';
 import { TrendingUp, PieChart, Calendar, DollarSign, Store, FileText, Download } from 'lucide-react-native';
 import { useCategoryStats, useReceipts } from '@/hooks/receipt-store-supabase';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,7 +10,10 @@ export default function AnalyticsScreen() {
   const { receipts, totals, isLoading } = useReceipts();
   const categoryStats = useCategoryStats();
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
   const [selectedTimeframe, setSelectedTimeframe] = React.useState<'month' | 'quarter' | 'year'>('month');
+  
+  const isSmallScreen = screenWidth < 400;
   
   const avgReceiptValue = totals.count > 0 ? totals.total / totals.count : 0;
   
@@ -113,42 +116,52 @@ export default function AnalyticsScreen() {
   }
 
   return (
-    <ScrollView style={[styles.container, { paddingTop: insets.top }]} showsVerticalScrollIndicator={false}>
-      <View style={styles.summaryCard}>
+    <ScrollView 
+      style={[styles.container, { paddingTop: insets.top }]} 
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: Spacing['3xl'] }}
+    >
+      <View style={[styles.summaryCard, isSmallScreen && styles.summaryCardSmall]}>
         <Text style={styles.summaryTitle}>Expense Summary</Text>
-        <View style={styles.summaryStats}>
+        <View style={[styles.summaryStats, isSmallScreen && styles.summaryStatsSmall]}>
           <View style={styles.summaryItem}>
-            <DollarSign size={20} color="#10B981" />
+            <DollarSign size={isSmallScreen ? 18 : 20} color={Colors.success} />
             <Text style={styles.summaryLabel}>Total Spent</Text>
-            <Text style={styles.summaryValue}>${totals.total.toFixed(2)}</Text>
+            <Text style={[styles.summaryValue, isSmallScreen && styles.summaryValueSmall]}>
+              ${totals.total.toFixed(2)}
+            </Text>
           </View>
-          <View style={styles.summaryDivider} />
+          {!isSmallScreen && <View style={styles.summaryDivider} />}
           <View style={styles.summaryItem}>
-            <TrendingUp size={20} color="#F59E0B" />
+            <TrendingUp size={isSmallScreen ? 18 : 20} color={Colors.orange} />
             <Text style={styles.summaryLabel}>Avg Receipt</Text>
-            <Text style={styles.summaryValue}>${avgReceiptValue.toFixed(2)}</Text>
+            <Text style={[styles.summaryValue, isSmallScreen && styles.summaryValueSmall]}>
+              ${avgReceiptValue.toFixed(2)}
+            </Text>
           </View>
-          <View style={styles.summaryDivider} />
+          {!isSmallScreen && <View style={styles.summaryDivider} />}
           <View style={styles.summaryItem}>
-            <FileText size={20} color="#8B5CF6" />
+            <FileText size={isSmallScreen ? 18 : 20} color={Colors.accent} />
             <Text style={styles.summaryLabel}>Tax Deductible</Text>
-            <Text style={styles.summaryValue}>${taxDeductibleExpenses.total.toFixed(0)}</Text>
+            <Text style={[styles.summaryValue, isSmallScreen && styles.summaryValueSmall]}>
+              ${taxDeductibleExpenses.total.toFixed(0)}
+            </Text>
           </View>
         </View>
       </View>
 
       {/* Tax Preparation Section */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <FileText size={20} color="#8B5CF6" />
-          <Text style={styles.sectionTitle}>Tax Preparation</Text>
-          <TouchableOpacity onPress={exportTaxData} style={styles.exportButton}>
-            <Download size={16} color="#8B5CF6" />
+      <View style={[styles.section, isSmallScreen && styles.sectionSmall]}>
+        <View style={[styles.sectionHeader, isSmallScreen && styles.sectionHeaderSmall]}>
+          <FileText size={isSmallScreen ? 18 : 20} color={Colors.accent} />
+          <Text style={[styles.sectionTitle, { flex: 1 }]}>Tax Preparation</Text>
+          <TouchableOpacity onPress={exportTaxData} style={[styles.exportButton, isSmallScreen && styles.exportButtonSmall]}>
+            <Download size={14} color={Colors.accent} />
             <Text style={styles.exportButtonText}>Export</Text>
           </TouchableOpacity>
         </View>
         
-        <View style={styles.taxSummary}>
+        <View style={[styles.taxSummary, isSmallScreen && styles.taxSummarySmall]}>
           <View style={styles.taxItem}>
             <Text style={styles.taxLabel}>Deductible Expenses</Text>
             <Text style={styles.taxValue}>${taxDeductibleExpenses.total.toFixed(2)}</Text>
@@ -169,9 +182,9 @@ export default function AnalyticsScreen() {
       </View>
 
       {/* Merchant Insights */}
-      <View style={styles.section}>
+      <View style={[styles.section, isSmallScreen && styles.sectionSmall]}>
         <View style={styles.sectionHeader}>
-          <Store size={20} color="#F59E0B" />
+          <Store size={isSmallScreen ? 18 : 20} color={Colors.orange} />
           <Text style={styles.sectionTitle}>Top Merchants</Text>
         </View>
         
@@ -210,9 +223,9 @@ export default function AnalyticsScreen() {
         )}
       </View>
 
-      <View style={styles.section}>
+      <View style={[styles.section, isSmallScreen && styles.sectionSmall]}>
         <View style={styles.sectionHeader}>
-          <PieChart size={20} color="#1E40AF" />
+          <PieChart size={isSmallScreen ? 18 : 20} color={Colors.primary} />
           <Text style={styles.sectionTitle}>Spending by Category</Text>
         </View>
         
@@ -245,10 +258,10 @@ export default function AnalyticsScreen() {
         )}
       </View>
 
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Calendar size={20} color="#1E40AF" />
-          <Text style={styles.sectionTitle}>Spending Trends</Text>
+      <View style={[styles.section, isSmallScreen && styles.sectionSmall]}>
+        <View style={[styles.sectionHeader, isSmallScreen && styles.sectionHeaderSmall]}>
+          <Calendar size={isSmallScreen ? 18 : 20} color={Colors.primary} />
+          <Text style={[styles.sectionTitle, { flex: 1 }]}>Spending Trends</Text>
           <View style={styles.timeframeSelector}>
             {(['month', 'quarter', 'year'] as const).map((timeframe) => (
               <TouchableOpacity
@@ -256,7 +269,8 @@ export default function AnalyticsScreen() {
                 onPress={() => setSelectedTimeframe(timeframe)}
                 style={[
                   styles.timeframeButton,
-                  selectedTimeframe === timeframe && styles.timeframeButtonActive
+                  selectedTimeframe === timeframe && styles.timeframeButtonActive,
+                  isSmallScreen && styles.timeframeButtonSmall
                 ]}
               >
                 <Text style={[
@@ -321,7 +335,7 @@ export default function AnalyticsScreen() {
         )}
       </View>
 
-      <View style={styles.insightCard}>
+      <View style={[styles.insightCard, isSmallScreen && styles.insightCardSmall]}>
         <Text style={styles.insightTitle}>💡 Smart Insights</Text>
         <Text style={styles.insightText}>
           {totals.count > 20 
@@ -349,6 +363,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.gray100,
   },
+  summaryCardSmall: {
+    margin: Spacing.md,
+    padding: Spacing.lg,
+  },
   summaryTitle: {
     ...CommonStyles.heading3,
     marginBottom: Spacing.lg,
@@ -356,6 +374,10 @@ const styles = StyleSheet.create({
   summaryStats: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  summaryStatsSmall: {
+    flexDirection: 'column',
+    gap: Spacing.lg,
   },
   summaryItem: {
     flex: 1,
@@ -375,6 +397,9 @@ const styles = StyleSheet.create({
     color: Colors.gray900,
     textAlign: 'center',
   },
+  summaryValueSmall: {
+    fontSize: Typography.base,
+  },
   summaryDivider: {
     width: 1,
     height: 60,
@@ -390,11 +415,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.gray100,
   },
+  sectionSmall: {
+    marginHorizontal: Spacing.md,
+    padding: Spacing.lg,
+  },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm,
     marginBottom: Spacing.lg,
+  },
+  sectionHeaderSmall: {
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
   },
   sectionTitle: {
     ...CommonStyles.heading4,
@@ -490,6 +523,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.primaryLight + '20',
   },
+  insightCardSmall: {
+    marginHorizontal: Spacing.md,
+    padding: Spacing.md,
+  },
   insightTitle: {
     fontSize: Typography.sm,
     fontWeight: Typography.semibold,
@@ -512,6 +549,10 @@ const styles = StyleSheet.create({
     marginLeft: 'auto',
     ...Shadows.sm,
   },
+  exportButtonSmall: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+  },
   exportButtonText: {
     fontSize: Typography.xs,
     color: Colors.accent,
@@ -524,6 +565,10 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
     marginBottom: Spacing.sm,
+  },
+  taxSummarySmall: {
+    flexDirection: 'column',
+    gap: Spacing.md,
   },
   taxItem: {
     alignItems: 'center',
@@ -608,6 +653,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     ...Shadows.sm,
+  },
+  timeframeButtonSmall: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
   },
   timeframeButtonActive: {
     backgroundColor: Colors.primary,

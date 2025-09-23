@@ -27,12 +27,12 @@ export default function ReceiptsScreen() {
   
   console.log('ReceiptsScreen render - filteredReceipts count:', filteredReceipts.length);
 
-  // Auto-refresh every 5 seconds
+  // Auto-refresh every 30 seconds (reduced from 5 seconds for better performance)
   useEffect(() => {
     const interval = setInterval(() => {
       console.log('Auto-refreshing receipts...');
       queryClient.invalidateQueries({ queryKey: ['receipts', user?.id] });
-    }, 5000);
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [queryClient, user?.id]);
@@ -106,10 +106,14 @@ export default function ReceiptsScreen() {
       <View style={styles.resultsHeader}>
         <Text style={styles.resultsCount}>
           {filteredReceipts.length} {filteredReceipts.length === 1 ? 'receipt' : 'receipts'}
+          {selectedCategory && (
+            <Text style={styles.filterIndicator}> • {selectedCategory}</Text>
+          )}
         </Text>
-        <Text style={styles.autoRefreshText}>
-          Auto-refresh: ON
-        </Text>
+        <View style={styles.statusContainer}>
+          <View style={[styles.statusDot, { backgroundColor: Colors.success }]} />
+          <Text style={styles.autoRefreshText}>Live</Text>
+        </View>
       </View>
 
       <FlatList
@@ -165,6 +169,7 @@ const styles = StyleSheet.create({
     ...Shadows.md,
     borderWidth: 1,
     borderColor: Colors.gray100,
+    minHeight: 44,
   },
   searchInput: {
     flex: 1,
@@ -192,11 +197,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingBottom: Spacing.md,
     paddingTop: Spacing.xs,
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
   },
   resultsCount: {
     fontSize: Typography.sm,
     color: Colors.gray600,
     fontWeight: Typography.semibold,
+    flex: 1,
+    minWidth: 120,
   },
   listContent: {
     paddingBottom: 100,
@@ -235,10 +244,25 @@ const styles = StyleSheet.create({
   refreshIconSpinning: {
     transform: [{ rotate: '180deg' }],
   },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
   autoRefreshText: {
     fontSize: Typography.xs,
     color: Colors.secondary,
     fontWeight: Typography.semibold,
+  },
+  filterIndicator: {
+    fontSize: Typography.xs,
+    color: Colors.primary,
+    fontWeight: Typography.medium,
   },
   fab: {
     position: 'absolute',
