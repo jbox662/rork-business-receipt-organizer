@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
+import { TouchableOpacity, Text, ActivityIndicator, ViewStyle, TextStyle, View, StyleSheet } from 'react-native';
 import { CommonStyles, ButtonTextStyles, Colors } from '@/constants/design-system';
 
 interface ButtonProps {
@@ -131,11 +131,26 @@ export function Button({
           color={variant === 'secondary' || variant === 'outline' ? Colors.gray600 : Colors.white} 
         />
       ) : (
-        <>
-          {icon}
+        <View style={[buttonContentStyles.content, { gap: icon ? 8 : 0 }]}>
+          {icon && (
+            <View style={buttonContentStyles.iconContainer}>
+              {/* eslint-disable-next-line @rork/linters/general-no-raw-text */}
+              {icon}
+            </View>
+          )}
           <Text style={getTextStyle()}>{title}</Text>
-        </>
+        </View>
       )}
     </TouchableOpacity>
   );
 }
+
+const buttonContentStyles = StyleSheet.create({
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconContainer: {
+    // Empty container to properly wrap the icon
+  },
+});
