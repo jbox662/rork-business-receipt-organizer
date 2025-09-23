@@ -12,8 +12,6 @@ interface ReceiptCardProps {
 export function ReceiptCard({ receipt }: ReceiptCardProps) {
   console.log('ReceiptCard render - Receipt ID:', receipt.id);
   console.log('ReceiptCard render - Image URI:', receipt.imageUri);
-  console.log('ReceiptCard render - Image URI length:', receipt.imageUri?.length);
-  console.log('ReceiptCard render - Image URI valid:', !!(receipt.imageUri && receipt.imageUri.trim() !== '' && (receipt.imageUri.startsWith('http') || receipt.imageUri.startsWith('data:') || receipt.imageUri.startsWith('file:'))));
   console.log('ReceiptCard render - Platform:', Platform.OS);
   console.log('ReceiptCard render - User Agent:', Platform.OS === 'web' ? navigator.userAgent : 'N/A');
   
@@ -26,12 +24,8 @@ export function ReceiptCard({ receipt }: ReceiptCardProps) {
       <View style={styles.imageContainer}>
         {receipt.imageUri && receipt.imageUri.trim() !== '' && (receipt.imageUri.startsWith('http') || receipt.imageUri.startsWith('data:') || receipt.imageUri.startsWith('file:')) ? (
           <Image 
-            source={{ 
-              uri: receipt.imageUri,
-              cache: Platform.OS === 'web' ? 'default' : 'force-cache'
-            }} 
+            source={{ uri: receipt.imageUri }} 
             style={styles.thumbnail}
-            resizeMode="cover"
             onError={(error) => {
               console.log('ReceiptCard: Image failed to load for receipt:', receipt.id);
               console.log('ReceiptCard: Image URI:', receipt.imageUri);
@@ -39,12 +33,6 @@ export function ReceiptCard({ receipt }: ReceiptCardProps) {
             }}
             onLoad={() => {
               console.log('ReceiptCard: Image loaded successfully for receipt:', receipt.id);
-            }}
-            onLoadStart={() => {
-              console.log('ReceiptCard: Image load started for receipt:', receipt.id);
-            }}
-            onLoadEnd={() => {
-              console.log('ReceiptCard: Image load ended for receipt:', receipt.id);
             }}
           />
         ) : (
