@@ -23,6 +23,8 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
   // Load receipts - from Supabase if authenticated, AsyncStorage if not
   const receiptsQuery = useQuery({
     queryKey: ['receipts', user?.id],
+    retry: 2,
+    retryDelay: 1000,
     queryFn: async () => {
       if (user) {
         console.log('Loading receipts from Supabase for user:', user.id);
@@ -34,12 +36,12 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
             .order('created_at', { ascending: false });
 
           if (error) {
-            console.error('Error loading receipts from Supabase:', {
+            console.error('Error loading receipts from Supabase:', JSON.stringify({
               message: error.message,
               details: error.details,
               hint: error.hint,
               code: error.code
-            });
+            }, null, 2));
             
             // Check for common connection issues
             if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('fetch')) {
@@ -87,7 +89,11 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
             updatedAt: receipt.updated_at,
           }));
         } catch (networkError: any) {
-          console.error('Network error loading receipts:', networkError);
+          console.error('Network error loading receipts:', {
+            name: networkError.name,
+            message: networkError.message,
+            stack: networkError.stack?.substring(0, 200)
+          });
           
           // Handle network errors that don't come from Supabase
           if (networkError.message && networkError.message.includes('Network connection failed')) {
@@ -98,7 +104,17 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
             throw new Error('Unable to connect to the database. Please check your internet connection.');
           }
           
-          throw new Error(`Connection error: ${networkError.message || 'Unable to load receipts'}`);
+          // Fall back to AsyncStorage if Supabase fails
+          console.log('Falling back to AsyncStorage due to network error');
+          const stored = await AsyncStorage.getItem(RECEIPTS_KEY);
+          if (stored) {
+            try {
+              return JSON.parse(stored);
+            } catch (e) {
+              console.error('Failed to parse AsyncStorage fallback:', e);
+            }
+          }
+          return [];
         }
       } else {
         console.log('Loading receipts from AsyncStorage');
@@ -134,6 +150,8 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
   // Load categories - from Supabase if authenticated, AsyncStorage if not
   const categoriesQuery = useQuery({
     queryKey: ['categories', user?.id],
+    retry: 2,
+    retryDelay: 1000,
     queryFn: async () => {
       if (user) {
         console.log('Loading categories from Supabase for user:', user.id);
@@ -144,12 +162,12 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
             .eq('user_id', user.id);
 
           if (error) {
-            console.error('Error loading categories from Supabase:', {
+            console.error('Error loading categories from Supabase:', JSON.stringify({
               message: error.message,
               details: error.details,
               hint: error.hint,
               code: error.code
-            });
+            }, null, 2));
             
             // Check for common connection issues
             if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('fetch')) {
@@ -201,7 +219,11 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
 
           return data;
         } catch (networkError: any) {
-          console.error('Network error loading categories:', networkError);
+          console.error('Network error loading categories:', {
+            name: networkError.name,
+            message: networkError.message,
+            stack: networkError.stack?.substring(0, 200)
+          });
           
           // Handle network errors that don't come from Supabase
           if (networkError.message && networkError.message.includes('Network connection failed')) {
@@ -212,7 +234,17 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
             throw new Error('Unable to connect to the database. Please check your internet connection.');
           }
           
-          throw new Error(`Connection error: ${networkError.message || 'Unable to load categories'}`);
+          // Fall back to AsyncStorage or default categories if Supabase fails
+          console.log('Falling back to AsyncStorage/defaults due to network error');
+          const stored = await AsyncStorage.getItem(CATEGORIES_KEY);
+          if (stored) {
+            try {
+              return JSON.parse(stored);
+            } catch (e) {
+              console.error('Failed to parse AsyncStorage fallback:', e);
+            }
+          }
+          return DEFAULT_CATEGORIES;
         }
       } else {
         console.log('Loading categories from AsyncStorage');
