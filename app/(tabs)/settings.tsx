@@ -286,14 +286,14 @@ export default function SettingsScreen() {
         <View style={styles.header}>
           <View style={styles.userInfo}>
             <View style={styles.avatarContainer}>
-              <User size={32} color="#1E40AF" />
+              <User size={28} color="#1E40AF" />
             </View>
             <View style={styles.userDetails}>
               <Text style={styles.userName}>
                 {user?.email?.split('@')[0] || 'Guest User'}
               </Text>
               <View style={styles.emailContainer}>
-                <Mail size={16} color="#6B7280" />
+                <Mail size={14} color="#6B7280" />
                 <Text style={styles.userEmail}>
                   {user?.email || 'Not signed in'}
                 </Text>
@@ -306,28 +306,28 @@ export default function SettingsScreen() {
           <View style={styles.statsContainer}>
             <View style={styles.statCard}>
               <View style={styles.statIconContainer}>
-                <ReceiptIcon size={20} color="#1E40AF" />
+                <ReceiptIcon size={18} color="#1E40AF" />
               </View>
               <Text style={styles.statValue}>{stats.totalReceipts}</Text>
               <Text style={styles.statLabel}>Total Receipts</Text>
             </View>
             <View style={styles.statCard}>
               <View style={styles.statIconContainer}>
-                <DollarSign size={20} color="#10B981" />
+                <DollarSign size={18} color="#10B981" />
               </View>
               <Text style={styles.statValue}>${stats.totalSpent.toFixed(0)}</Text>
               <Text style={styles.statLabel}>Total Spent</Text>
             </View>
             <View style={styles.statCard}>
               <View style={styles.statIconContainer}>
-                <Calendar size={20} color="#F59E0B" />
+                <Calendar size={18} color="#F59E0B" />
               </View>
               <Text style={styles.statValue}>{stats.monthlyReceipts}</Text>
               <Text style={styles.statLabel}>This Month</Text>
             </View>
             <View style={styles.statCard}>
               <View style={styles.statIconContainer}>
-                <TrendingUp size={20} color="#8B5CF6" />
+                <TrendingUp size={18} color="#8B5CF6" />
               </View>
               <Text style={styles.statValue}>${stats.monthlySpent.toFixed(0)}</Text>
               <Text style={styles.statLabel}>Monthly Spent</Text>
@@ -346,7 +346,7 @@ export default function SettingsScreen() {
                 disabled={item.disabled}
               >
                 <View style={styles.settingIcon}>
-                  <item.icon size={20} color={item.disabled ? "#D1D5DB" : "#6B7280"} />
+                  <item.icon size={18} color={item.disabled ? "#D1D5DB" : "#6B7280"} />
                 </View>
                 <View style={styles.settingContent}>
                   <Text style={[styles.settingTitle, item.disabled && styles.disabledText]}>
@@ -356,7 +356,7 @@ export default function SettingsScreen() {
                     {item.subtitle}
                   </Text>
                 </View>
-                <ChevronRight size={16} color={item.disabled ? "#D1D5DB" : "#9CA3AF"} />
+                <ChevronRight size={14} color={item.disabled ? "#D1D5DB" : "#9CA3AF"} />
               </TouchableOpacity>
             ))}
           </View>
@@ -371,13 +371,13 @@ export default function SettingsScreen() {
               onPress={item.onPress}
             >
               <View style={styles.settingIcon}>
-                <item.icon size={20} color="#6B7280" />
+                <item.icon size={18} color="#6B7280" />
               </View>
               <View style={styles.settingContent}>
                 <Text style={styles.settingTitle}>{item.title}</Text>
                 <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
               </View>
-              <ChevronRight size={16} color="#9CA3AF" />
+              <ChevronRight size={14} color="#9CA3AF" />
             </TouchableOpacity>
           ))}
         </View>
@@ -390,7 +390,7 @@ export default function SettingsScreen() {
             onPress={() => setShowBudgetModal(true)}
           >
             <View style={styles.settingIcon}>
-              <Plus size={20} color="#6B7280" />
+              <Plus size={18} color="#6B7280" />
             </View>
             <View style={styles.settingContent}>
               <Text style={styles.settingTitle}>Add Budget</Text>
@@ -431,7 +431,7 @@ export default function SettingsScreen() {
                     onPress={() => removeBudget(budget.id)}
                     style={styles.deleteBudgetButton}
                   >
-                    <Trash2 size={16} color="#DC2626" />
+                    <Trash2 size={14} color="#DC2626" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -448,7 +448,7 @@ export default function SettingsScreen() {
               onPress={item.onPress}
             >
               <View style={styles.settingIcon}>
-                <item.icon size={20} color={item.destructive ? "#DC2626" : "#6B7280"} />
+                <item.icon size={18} color={item.destructive ? "#DC2626" : "#6B7280"} />
               </View>
               <View style={styles.settingContent}>
                 <Text style={[styles.settingTitle, item.destructive && styles.destructiveText]}>
@@ -456,7 +456,7 @@ export default function SettingsScreen() {
                 </Text>
                 <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
               </View>
-              <ChevronRight size={16} color="#9CA3AF" />
+              <ChevronRight size={14} color="#9CA3AF" />
             </TouchableOpacity>
           ))}
         </View>
@@ -472,13 +472,13 @@ export default function SettingsScreen() {
               onPress={item.onPress}
             >
               <View style={styles.settingIcon}>
-                <item.icon size={20} color="#6B7280" />
+                <item.icon size={18} color="#6B7280" />
               </View>
               <View style={styles.settingContent}>
                 <Text style={styles.settingTitle}>{item.title}</Text>
                 <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
               </View>
-              <ChevronRight size={16} color="#9CA3AF" />
+              <ChevronRight size={14} color="#9CA3AF" />
             </TouchableOpacity>
           ))}
         </View>
@@ -614,58 +614,58 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: 'white',
-    paddingHorizontal: 20,
-    paddingVertical: 24,
-    marginBottom: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    marginBottom: 12,
   },
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   avatarContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#EBF4FF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    marginRight: 12,
   },
   userDetails: {
     flex: 1,
   },
   userName: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
     color: '#1F2937',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   emailContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   userEmail: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#6B7280',
     marginLeft: 6,
   },
   section: {
     backgroundColor: 'white',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#1F2937',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 12,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
   },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
   },
@@ -679,25 +679,25 @@ const styles = StyleSheet.create({
     color: '#DC2626',
   },
   settingIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    marginRight: 12,
   },
   settingContent: {
     flex: 1,
   },
   settingTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '500',
     color: '#1F2937',
-    marginBottom: 2,
+    marginBottom: 1,
   },
   settingSubtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#6B7280',
   },
   signOutButton: {
@@ -721,8 +721,8 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: 'center',
-    paddingVertical: 32,
-    paddingHorizontal: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
   },
   footerText: {
     fontSize: 14,
@@ -739,16 +739,16 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    gap: 12,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+    gap: 8,
   },
   statCard: {
     flex: 1,
     minWidth: '45%',
     backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 10,
+    padding: 12,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -757,33 +757,33 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   statIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700' as const,
     color: '#1F2937',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6B7280',
     textAlign: 'center',
   },
   buttonSection: {
-    paddingHorizontal: 20,
-    marginBottom: 16,
+    paddingHorizontal: 16,
+    marginBottom: 12,
   },
 
   budgetItem: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
   },
@@ -791,15 +791,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   budgetCategory: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '500',
     color: '#1F2937',
   },
   budgetAmount: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: '#6B7280',
   },
