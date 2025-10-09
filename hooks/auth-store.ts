@@ -36,6 +36,13 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         
         if (error) {
           console.error('Error getting initial session:', error);
+          
+          // Handle invalid refresh token error
+          if (error.message?.includes('Invalid Refresh Token') || 
+              error.message?.includes('Refresh Token Not Found')) {
+            console.log('Invalid refresh token detected, clearing session...');
+            await supabase.auth.signOut();
+          }
         }
         
         console.log('Initial session:', session?.user?.email || 'No session');
@@ -66,6 +73,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email || 'No session');
+        
+        // Handle token refresh errors
+        if (event === 'TOKEN_REFRESHED' && !session) {
+          console.log('Token refresh failed, clearing session...');
+          await supabase.auth.signOut();
+        }
         
         if (isMounted) {
           setAuthState({
