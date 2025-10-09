@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,12 +15,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Receipt } from '@/types/receipt';
 import { useAuth } from '@/hooks/auth-store';
 import { useReceipts, useBudgets } from '@/hooks/receipt-store-supabase';
-import { LogOut, User, Mail, Shield, HelpCircle, Info, ChevronRight, Trash2, Download, RefreshCw, Plus, X } from 'lucide-react-native';
+import { LogOut, User, Mail, Shield, HelpCircle, Info, ChevronRight, Trash2, Download, RefreshCw, Plus, X, Receipt as ReceiptIcon, DollarSign, TrendingUp, Calendar } from 'lucide-react-native';
 import { Button } from '@/components/ui/Button';
 import { Colors } from '@/constants/design-system';
 import { router } from 'expo-router';
+import Constants from 'expo-constants';
 
 import { DEFAULT_CATEGORIES } from '@/constants/categories';
+
+const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
+const SUPPORT_EMAIL = 'support@receiptly.app';
 
 export default function SettingsScreen() {
   const { user, signOut, resetPassword } = useAuth();
@@ -33,6 +37,24 @@ export default function SettingsScreen() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [budgetAmount, setBudgetAmount] = useState('');
   const insets = useSafeAreaInsets();
+
+  const stats = useMemo(() => {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const currentMonthReceipts = receipts.filter((r: Receipt) => {
+      const receiptMonth = new Date(r.receiptDate).toISOString().slice(0, 7);
+      return receiptMonth === currentMonth;
+    });
+    
+    const totalSpent = receipts.reduce((sum: number, r: Receipt) => sum + r.total, 0);
+    const monthlySpent = currentMonthReceipts.reduce((sum: number, r: Receipt) => sum + r.total, 0);
+    
+    return {
+      totalReceipts: receipts.length,
+      monthlyReceipts: currentMonthReceipts.length,
+      totalSpent,
+      monthlySpent,
+    };
+  }, [receipts]);
 
   const handleSignOut = async () => {
     Alert.alert(
@@ -153,11 +175,10 @@ export default function SettingsScreen() {
   };
 
   const handleContactSupport = () => {
-    const email = 'support@receiptscanner.com';
-    const subject = 'Receipt Scanner Support Request';
-    const body = `Hi,\n\nI need help with the Receipt Scanner app.\n\nDevice: ${Platform.OS}\nUser: ${user?.email || 'Guest'}\n\nDescription:\n`;
+    const subject = 'Receiptly Support Request';
+    const body = `Hi,\n\nI need help with the Receiptly app.\n\nDevice: ${Platform.OS}\nApp Version: ${APP_VERSION}\nUser: ${user?.email || 'Guest'}\n\nDescription:\n`;
     
-    const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const mailtoUrl = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     
     Linking.canOpenURL(mailtoUrl)
       .then((supported) => {
@@ -166,14 +187,14 @@ export default function SettingsScreen() {
         } else {
           Alert.alert(
             'Email Not Available',
-            `Please contact support at: ${email}`
+            `Please contact support at: ${SUPPORT_EMAIL}`
           );
         }
       })
       .catch(() => {
         Alert.alert(
           'Email Not Available',
-          `Please contact support at: ${email}`
+          `Please contact support at: ${SUPPORT_EMAIL}`
         );
       });
   };
@@ -194,8 +215,8 @@ export default function SettingsScreen() {
 
   const handleAbout = () => {
     Alert.alert(
-      'About Receipt Scanner',
-      `Version: 1.0.0\nBuild: ${Platform.OS === 'ios' ? 'iOS' : 'Android'}\n\nA secure and easy way to manage your receipts and expenses.\n\nDeveloped with ❤️ for small businesses and individuals.`
+      'About Receiptly',
+      `Version: ${APP_VERSION}\nPlatform: ${Platform.OS === 'ios' ? 'iOS' : Platform.OS === 'android' ? 'Android' : 'Web'}\n\nA secure and easy way to manage your receipts and expenses.\n\nDeveloped with ❤️ for small businesses and individuals.`
     );
   };
 
@@ -280,6 +301,39 @@ export default function SettingsScreen() {
             </View>
           </View>
         </View>
+
+        {user && (
+          <View style={styles.statsContainer}>
+            <View style={styles.statCard}>
+              <View style={styles.statIconContainer}>
+                <ReceiptIcon size={20} color="#1E40AF" />
+              </View>
+              <Text style={styles.statValue}>{stats.totalReceipts}</Text>
+              <Text style={styles.statLabel}>Total Receipts</Text>
+            </View>
+            <View style={styles.statCard}>
+              <View style={styles.statIconContainer}>
+                <DollarSign size={20} color="#10B981" />
+              </View>
+              <Text style={styles.statValue}>${stats.totalSpent.toFixed(0)}</Text>
+              <Text style={styles.statLabel}>Total Spent</Text>
+            </View>
+            <View style={styles.statCard}>
+              <View style={styles.statIconContainer}>
+                <Calendar size={20} color="#F59E0B" />
+              </View>
+              <Text style={styles.statValue}>{stats.monthlyReceipts}</Text>
+              <Text style={styles.statLabel}>This Month</Text>
+            </View>
+            <View style={styles.statCard}>
+              <View style={styles.statIconContainer}>
+                <TrendingUp size={20} color="#8B5CF6" />
+              </View>
+              <Text style={styles.statValue}>${stats.monthlySpent.toFixed(0)}</Text>
+              <Text style={styles.statLabel}>Monthly Spent</Text>
+            </View>
+          </View>
+        )}
 
         {user && (
           <View style={styles.section}>
@@ -455,9 +509,12 @@ export default function SettingsScreen() {
         )}
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Receipt Scanner v1.0.0</Text>
+          <Text style={styles.footerText}>Receiptly v{APP_VERSION}</Text>
           <Text style={styles.footerSubtext}>
             Secure receipt management for businesses
+          </Text>
+          <Text style={styles.footerSubtext}>
+            Support: {SUPPORT_EMAIL}
           </Text>
         </View>
       </ScrollView>
@@ -669,13 +726,54 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#6B7280',
+    fontWeight: '600' as const,
+    color: '#1F2937',
     marginBottom: 4,
   },
   footerSubtext: {
     fontSize: 12,
     color: '#9CA3AF',
+    textAlign: 'center',
+    marginTop: 2,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    gap: 12,
+  },
+  statCard: {
+    flex: 1,
+    minWidth: '45%',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  statIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: '700' as const,
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#6B7280',
     textAlign: 'center',
   },
   buttonSection: {
