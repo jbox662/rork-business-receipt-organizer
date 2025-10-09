@@ -15,6 +15,7 @@ interface AuthActions {
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<{ error: AuthError | null }>;
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
+  updateEmail: (newEmail: string) => Promise<{ error: AuthError | null }>;
 }
 
 export const [AuthProvider, useAuth] = createContextHook(() => {
@@ -236,11 +237,52 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     return { error };
   };
 
+  const updateEmail = async (newEmail: string) => {
+    console.log('Updating email to:', newEmail);
+    
+    try {
+      const { error } = await supabase.auth.updateUser({
+        email: newEmail.trim().toLowerCase(),
+      });
+      
+      if (error) {
+        console.error('Update email error:', error);
+        
+        let userMessage = error.message;
+        
+        if (error.message?.includes('Email rate limit exceeded')) {
+          userMessage = 'Too many email change requests. Please try again later.';
+        } else if (error.message?.includes('Unable to validate email address')) {
+          userMessage = 'Please enter a valid email address.';
+        } else if (error.message?.includes('Email already exists')) {
+          userMessage = 'This email is already in use by another account.';
+        }
+        
+        return { error: { ...error, message: userMessage } };
+      }
+      
+      console.log('Email update initiated. Confirmation email sent.');
+      return { error: null };
+      
+    } catch (networkError: any) {
+      console.error('Network error during email update:', networkError);
+      
+      return { 
+        error: { 
+          message: 'Network error. Please check your internet connection and try again.',
+          status: 0,
+          name: 'NetworkError'
+        } as any
+      };
+    }
+  };
+
   return {
     ...authState,
     signUp,
     signIn,
     signOut,
     resetPassword,
+    updateEmail,
   } as AuthState & AuthActions;
 });

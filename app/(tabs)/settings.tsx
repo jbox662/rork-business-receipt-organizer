@@ -27,7 +27,7 @@ const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
 const SUPPORT_EMAIL = 'support@receiptly.app';
 
 export default function SettingsScreen() {
-  const { user, signOut, resetPassword } = useAuth();
+  const { user, signOut, resetPassword, updateEmail } = useAuth();
   const { receipts, deleteReceipt } = useReceipts();
   const { budgets, setBudget, removeBudget } = useBudgets();
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -36,6 +36,8 @@ export default function SettingsScreen() {
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [budgetAmount, setBudgetAmount] = useState('');
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
   const insets = useSafeAreaInsets();
 
   const stats = useMemo(() => {
@@ -108,6 +110,36 @@ export default function SettingsScreen() {
         },
       ]
     );
+  };
+
+  const handleChangeEmail = () => {
+    setNewEmail(user?.email || '');
+    setShowEmailModal(true);
+  };
+
+  const handleUpdateEmail = async () => {
+    if (!newEmail || !newEmail.trim()) {
+      Alert.alert('Error', 'Please enter a valid email address.');
+      return;
+    }
+
+    if (newEmail.trim().toLowerCase() === user?.email?.toLowerCase()) {
+      Alert.alert('Error', 'This is already your current email address.');
+      return;
+    }
+
+    const { error } = await updateEmail(newEmail);
+    
+    if (error) {
+      Alert.alert('Error', error.message || 'Failed to update email. Please try again.');
+    } else {
+      setShowEmailModal(false);
+      setNewEmail('');
+      Alert.alert(
+        'Confirmation Email Sent',
+        'Please check both your old and new email addresses to confirm the change.'
+      );
+    }
   };
 
   const handleDeleteAllData = () => {
@@ -225,6 +257,13 @@ export default function SettingsScreen() {
   const accountItems = [
     {
       icon: Mail,
+      title: 'Change Email',
+      subtitle: 'Update your email address',
+      onPress: handleChangeEmail,
+      disabled: !user,
+    },
+    {
+      icon: Shield,
       title: 'Reset Password',
       subtitle: 'Change your account password',
       onPress: handleResetPassword,
@@ -600,6 +639,67 @@ export default function SettingsScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Email Change Modal */}
+      <Modal
+        visible={showEmailModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowEmailModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Change Email</Text>
+              <TouchableOpacity 
+                onPress={() => setShowEmailModal(false)}
+                style={styles.modalCloseButton}
+              >
+                <X size={24} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.modalBody}>
+              <Text style={styles.inputLabel}>Current Email</Text>
+              <View style={styles.currentEmailContainer}>
+                <Text style={styles.currentEmailText}>{user?.email}</Text>
+              </View>
+              
+              <Text style={styles.inputLabel}>New Email</Text>
+              <TextInput
+                style={styles.budgetInput}
+                value={newEmail}
+                onChangeText={setNewEmail}
+                placeholder="Enter new email address"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                placeholderTextColor="#9CA3AF"
+              />
+              
+              <Text style={styles.emailChangeNote}>
+                You will receive confirmation emails at both your old and new email addresses.
+              </Text>
+              
+              <TouchableOpacity
+                style={[
+                  styles.addBudgetButton,
+                  !newEmail.trim() && styles.addBudgetButtonDisabled
+                ]}
+                onPress={handleUpdateEmail}
+                disabled={!newEmail.trim()}
+              >
+                <Text style={[
+                  styles.addBudgetButtonText,
+                  !newEmail.trim() && styles.addBudgetButtonTextDisabled
+                ]}>
+                  Update Email
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -911,5 +1011,21 @@ const styles = StyleSheet.create({
   },
   addBudgetButtonTextDisabled: {
     color: '#9CA3AF',
+  },
+  currentEmailContainer: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 20,
+  },
+  currentEmailText: {
+    fontSize: 16,
+    color: '#6B7280',
+  },
+  emailChangeNote: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginBottom: 20,
+    lineHeight: 18,
   },
 });
