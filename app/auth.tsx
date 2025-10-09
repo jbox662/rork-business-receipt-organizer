@@ -12,8 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/hooks/auth-store';
-import { testSupabaseConnection } from '@/constants/supabase';
-import { Mail, Lock, Eye, EyeOff, User, Wifi } from 'lucide-react-native';
+import { Mail, Lock, Eye, EyeOff, User } from 'lucide-react-native';
 
 export default function AuthScreen() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -22,7 +21,6 @@ export default function AuthScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [testingConnection, setTestingConnection] = useState(false);
   const { signIn, signUp, loading } = useAuth();
 
   const handleAuth = async () => {
@@ -96,23 +94,7 @@ export default function AuthScreen() {
     setShowConfirmPassword(false);
   };
 
-  const testConnection = async () => {
-    setTestingConnection(true);
-    
-    console.log('Starting connection test...');
-    
-    const result = await testSupabaseConnection();
-    setTestingConnection(false);
-    
-    if (result.success) {
-      Alert.alert('Connection Test', 'Successfully connected to Supabase!\n\nYou can now try signing up.');
-    } else {
-      Alert.alert(
-        'Connection Test Failed', 
-        `Error: ${result.error || 'Unknown error'}\n\nPlease check:\n1. Internet connection\n2. Supabase project is active`
-      );
-    }
-  };
+
   
 
   
@@ -223,17 +205,6 @@ export default function AuthScreen() {
                   : "Don't have an account? Sign Up"}
               </Text>
             </TouchableOpacity>
-
-            <TouchableOpacity 
-              onPress={testConnection} 
-              style={styles.testButton}
-              disabled={testingConnection}
-            >
-              <Wifi size={16} color="#6B7280" style={styles.testButtonIcon} />
-              <Text style={styles.testButtonText}>
-                {testingConnection ? 'Testing...' : 'Test Connection'}
-              </Text>
-            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -327,21 +298,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  testButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 16,
-    paddingVertical: 8,
-  },
-  testButtonText: {
-    color: '#6B7280',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  testButtonIcon: {
-    marginRight: 8,
-  },
+
   debugContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
