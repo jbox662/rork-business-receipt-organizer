@@ -44,6 +44,27 @@ const customStorage = {
   },
 };
 
+const fetchWithRetry = async (url: RequestInfo, options?: RequestInit): Promise<Response> => {
+  const maxRetries = 3;
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      if (attempt > 0) {
+        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
+        console.log(`Retry attempt ${attempt}/${maxRetries - 1}, waiting ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+      return await fetch(url, options);
+    } catch (error: any) {
+      lastError = error;
+      console.warn(`Fetch attempt ${attempt + 1} failed:`, error?.message || 'Unknown error');
+    }
+  }
+
+  throw lastError || new Error('Failed to fetch after retries');
+};
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
@@ -55,6 +76,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     headers: {
       'X-Client-Info': 'expo-receiptly@1.0.0',
     },
+    fetch: fetchWithRetry,
   },
 });
 
