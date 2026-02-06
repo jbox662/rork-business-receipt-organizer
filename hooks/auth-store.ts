@@ -193,12 +193,18 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       }
       
       return { error };
-    } catch (networkError) {
+    } catch (networkError: any) {
       console.error('Network error during signin:', networkError);
       setAuthState(prev => ({ ...prev, loading: false }));
+      
+      let errorMessage = 'Unable to connect to the server. Please check your internet connection and try again.';
+      if (networkError?.message?.includes('fetch')) {
+        errorMessage = 'Cannot reach the server. The service may be temporarily unavailable — please try again in a moment.';
+      }
+      
       return { 
         error: { 
-          message: 'Network error. Please check your internet connection and try again.',
+          message: errorMessage,
           status: 0,
           name: 'NetworkError'
         } as any
