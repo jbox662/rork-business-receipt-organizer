@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Redirecting…</title>
+  <script>
+    // Plaid redirects here after OAuth. Redirect to the app so it opens and can complete the link.
+    var qs = window.location.search || '';
+    window.location.replace('receiptly://plaid' + qs);
+  </script>
+  <style>
+    body { font-family: system-ui, sans-serif; text-align: center; padding: 2rem; }
+    p { color: #666; }
+  </style>
+</head>
+<body>
+  <p>Redirecting back to the app…</p>
+  <p>If nothing happens, <a href="receiptly://plaid">open the app</a>.</p>
+</body>
+</html>
