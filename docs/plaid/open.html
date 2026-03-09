@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Opening SpendSnap…</title>
+  <script>
+    (function() {
+      var qs = window.location.search || '';
+      var appUrl = 'receiptly://plaid' + qs;
+      // Try immediate redirect (works when system hands off custom scheme to the app)
+      window.location.replace(appUrl);
+      // If still here after 1.5s, show fallback (e.g. in-app browser blocked the scheme)
+      setTimeout(function() {
+        document.body.innerHTML = '<h1>Open in SpendSnap</h1><p>If SpendSnap didn’t open, <a href="' + appUrl + '">tap here</a> to try again, or open SpendSnap from your home screen and connect your bank from Settings.</p>';
+      }, 1500);
+    })();
+  </script>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 1.25rem; max-width: 28rem; margin: 2rem auto; text-align: center; color: #333; }
+    a { color: #007AFF; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <p>Opening SpendSnap…</p>
+</body>
+</html>
