@@ -3,19 +3,53 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Redirecting…</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Open in SpendSnap</title>
   <script>
-    // Plaid redirects here after OAuth. Redirect to the app so it opens and can complete the link.
     var qs = window.location.search || '';
-    window.location.replace('receiptly://plaid' + qs);
+    var appUrl = 'receiptly://plaid' + qs;
+    function init() {
+      var input = document.getElementById('redirectUrl');
+      var openLink = document.getElementById('openInApp');
+      if (input) input.value = appUrl;
+      if (openLink) { openLink.href = appUrl; openLink.style.pointerEvents = 'auto'; }
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+    function copyUrl() {
+      var input = document.getElementById('redirectUrl');
+      if (input && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(input.value);
+        var btn = document.getElementById('copyBtn');
+        if (btn) { btn.textContent = 'Copied!'; setTimeout(function() { btn.textContent = 'Copy'; }, 2000); }
+      }
+    }
   </script>
   <style>
-    body { font-family: system-ui, sans-serif; text-align: center; padding: 2rem; }
-    p { color: #666; }
+    body { font-family: system-ui, sans-serif; padding: 1.25rem; max-width: 28rem; margin: 0 auto; }
+    h1 { font-size: 1.1rem; margin-bottom: 1rem; color: #333; }
+    p { color: #444; font-size: 0.9rem; margin: 0.75rem 0; }
+    .open-link { display: block; width: 100%; margin: 0 0 1.5rem 0; padding: 1rem 1.25rem; background: #007AFF; color: white !important; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 1.15rem; text-align: center; box-sizing: border-box; }
+    .open-link:active { opacity: 0.9; }
+    .box { background: #f0f4f8; border: 1px solid #ccc; border-radius: 8px; padding: 1rem; margin: 1rem 0; text-align: left; }
+    #redirectUrl { width: 100%; font-size: 0.7rem; padding: 0.6rem; box-sizing: border-box; margin-bottom: 0.5rem; }
+    .copy-btn { padding: 0.5rem 1rem; font-size: 1rem; cursor: pointer; }
   </style>
 </head>
 <body>
-  <p>Redirecting back to the app…</p>
-  <p>If nothing happens, <a href="receiptly://plaid">open the app</a>.</p>
+  <h1>Finish in SpendSnap</h1>
+  <a id="openInApp" class="open-link" href="#">Open in app</a>
+  <p>Tap the blue button above to open SpendSnap and finish connecting your bank.</p>
+  <div class="box">
+    <label for="redirectUrl"><strong>Or copy this link:</strong></label>
+    <input type="text" id="redirectUrl" readonly />
+    <button id="copyBtn" class="copy-btn" onclick="copyUrl()">Copy</button>
+  </div>
+  <p style="font-size: 0.85rem; color: #666;">Simulator: copy the link, then in SpendSnap go to Settings → Bank → Paste redirect link.</p>
 </body>
 </html>
